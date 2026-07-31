@@ -46,14 +46,14 @@ namespace SoftConsulting.ColorPicker.Processors
             // bootstrap, not just the write at the end.
             using (new SecurityDisabler())
             {
-                Database core = Factory.GetDatabase("core", false);
+                var core = Factory.GetDatabase("core", false);
                 if (core == null)
                 {
                     Log.Warn("ColorPicker bootstrap: 'core' database not found, skipping.", this);
                     return;
                 }
 
-                Item item = core.GetItem(FieldTypeItemPath);
+                var item = core.GetItem(FieldTypeItemPath);
                 if (item != null)
                 {
                     // Already created by a previous run of this processor - just keep
@@ -62,24 +62,24 @@ namespace SoftConsulting.ColorPicker.Processors
                     return;
                 }
 
-                TemplateItem fieldTypeTemplate = core.Templates[TemplateFieldTypeId];
+                var fieldTypeTemplate = core.Templates[TemplateFieldTypeId];
                 if (fieldTypeTemplate == null)
                 {
                     Log.Error("ColorPicker bootstrap: template " + TemplateFieldTypeId + " not found, skipping.", this);
                     return;
                 }
 
-                Item category = core.GetItem(CategoryItemPath);
+                var category = core.GetItem(CategoryItemPath);
                 if (category == null)
                 {
-                    Item fieldTypesRoot = core.GetItem(FieldTypesRootId);
+                    var fieldTypesRoot = core.GetItem(FieldTypesRootId);
                     if (fieldTypesRoot == null)
                     {
                         Log.Error("ColorPicker bootstrap: parent item " + FieldTypesRootId + " not found, skipping.", this);
                         return;
                     }
 
-                    TemplateItem folderTemplate = core.Templates[FolderTemplateId];
+                    var folderTemplate = core.Templates[FolderTemplateId];
                     if (folderTemplate == null)
                     {
                         Log.Error("ColorPicker bootstrap: template " + FolderTemplateId + " not found, skipping.", this);

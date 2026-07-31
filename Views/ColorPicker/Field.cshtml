@@ -1,0 +1,70 @@
+@model SoftConsulting.ColorPicker.Fields.ColorPickerViewModel
+@*
+    Renders the Color Picker field's markup. All interaction handlers are inlined directly on
+    each element (no shared <script> block) because the Content Editor frequently injects field
+    markup via innerHTML-style updates, and browsers never execute <script> tags inserted that
+    way - a shared, separately-declared function would silently never run. Do not add one here.
+
+    The script text built by BuildSyncScript/BuildHexChangeScript below is written via Html.Raw -
+    it is JS source going into onclick/onchange attributes and must not be HTML-entity-encoded,
+    unlike every other value below which relies on Razor's automatic encoding of "@expression"
+    output.
+*@
+@functions
+{
+    /// <summary>
+    /// Builds a self-contained inline script that writes <paramref name="hexExpression"/>
+    /// (a JS expression, either a quoted literal or "this.value") into the hidden field, the
+    /// native color input and the hex textbox, then notifies the Content Editor that the form
+    /// was modified.
+    /// </summary>
+    private static string BuildSyncScript(string id, string hexExpression)
+    {
+        return string.Format(
+            "var v={1};" +
+            "var h=document.getElementById('{0}');" +
+            "var n=document.getElementById('{0}_native');" +
+            "var x=document.getElementById('{0}_hex');" +
+            "if(h){{h.value=v;}}" +
+            "if(n){{n.value=v;}}" +
+            "if(x){{x.value=v;}}" +
+            "if(h){{var ev;try{{ev=new Event('change',{{bubbles:true}});}}catch(e){{ev=document.createEvent('Event');ev.initEvent('change',true,true);}}h.dispatchEvent(ev);}}" +
+            "if(typeof scForm!=='undefined'&&scForm&&('modified' in scForm)){{scForm.modified=true;}}",
+            id, hexExpression);
+    }
+
+    private static string BuildHexChangeScript(string id)
+    {
+        return
+            "var v=this.value;" +
+            "if(v&&v.charAt(0)!=='#'){v='#'+v;}" +
+            "if(/^#[0-9A-Fa-f]{6}$/.test(v)){" + BuildSyncScript(id, "v") + "}" +
+            "else{this.value=document.getElementById('" + id + "').value;}";
+    }
+}
+<div id="@(Model.Id)_wrapper" class="scColorPickerField" style="display:flex;align-items:center;gap:6px;">
+    <input type="hidden" id="@Model.Id" name="@Model.Id" value="@Model.Value" />
+    @if (Model.Swatches.Count > 0)
+    {
+        <span class="scColorPickerSwatches" style="display:inline-flex;gap:4px;">
+            @foreach (var swatch in Model.Swatches)
+            {
+                // A <button>, not an <a>, since anchor tags are prone to being specially
+                // styled/reset by Content Editor chrome CSS (this is what was silently hiding
+                // the swatches even though they were rendering with correct inline styles).
+                var cssClass = swatch.Selected ? "scColorPickerSwatch scColorPickerSwatchSelected" : "scColorPickerSwatch";
+                var borderStyle = swatch.Selected ? "2px solid #1e88e5" : "1px solid #b9c0c7";
+                <button type="button" class="@cssClass" title="@(swatch.Name) (@swatch.Hex)"
+                        style="display:inline-block;width:22px;height:22px;padding:0;background-color:@swatch.Hex;border:@borderStyle;cursor:pointer;"
+                        onclick="@Html.Raw(BuildSyncScript(Model.Id, "'" + swatch.Hex + "'"))"></button>
+            }
+        </span>
+    }
+    <input type="color" id="@(Model.Id)_native" value="@Model.NativeValue"
+           title="Choose a color"
+           style="width:36px;height:28px;padding:0;border:1px solid #b9c0c7;cursor:pointer;"
+           onchange="@Html.Raw(BuildSyncScript(Model.Id, "this.value"))" />
+    <input type="text" id="@(Model.Id)_hex" class="scColorPickerHex" maxlength="7" value="@Model.Value"
+           placeholder="#RRGGBB" style="width:80px;"
+           onchange="@Html.Raw(BuildHexChangeScript(Model.Id))" />
+</div>

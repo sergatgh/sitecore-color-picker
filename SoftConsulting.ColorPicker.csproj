@@ -142,7 +142,16 @@
   <ItemGroup>
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Fields\ColorPicker.cs" />
+    <Compile Include="Fields\ColorPickerField.cs" />
+    <Compile Include="Fields\ColorPickerSourceParser.cs" />
+    <Compile Include="Fields\ColorPickerUtils.cs" />
+    <Compile Include="Fields\ColorPickerViewModel.cs" />
+    <Compile Include="Infrastructure\ContentDatabaseResolver.cs" />
+    <Compile Include="Infrastructure\RazorViewRenderer.cs" />
     <Compile Include="Processors\InitializeColorPickerFieldType.cs" />
+    <Compile Include="Processors\InitializeColorPickerPalette.cs" />
+    <Compile Include="Processors\InitializeSwatchValidator.cs" />
+    <Compile Include="Validators\SwatchValidator.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
@@ -151,6 +160,8 @@
   <ItemGroup>
     <Content Include="App_Config\Include\SoftConsulting\ColorPicker\SoftConsulting.ColorPicker.Initialize.config" />
     <Content Include="App_Config\Include\SoftConsulting\ColorPicker\SoftConsulting.ColorPicker.Fields.config" />
+    <Content Include="Views\ColorPicker\Field.cshtml" />
+    <Content Include="Views\Web.config" />
   </ItemGroup>
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>
