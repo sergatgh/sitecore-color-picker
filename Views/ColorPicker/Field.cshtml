@@ -129,11 +129,11 @@
         return !string.IsNullOrEmpty(hex) && hex.Length >= 9 ? System.Convert.ToInt32(hex.Substring(7, 2), 16) : 255;
     }
 }
-<div id="@(Model.Id)_wrapper" class="scColorPickerField" style="display:flex;align-items:center;gap:6px;">
+<div id="@(Model.Id)_wrapper" class="scColorPickerField" style="display:flex;flex-wrap:wrap;align-items:center;gap:6px;max-width:100%;box-sizing:border-box;">
     <input type="hidden" id="@Model.Id" name="@Model.Id" value="@Model.Value" />
     @if (Model.Swatches.Count > 0)
     {
-        <span class="scColorPickerSwatches" style="display:inline-flex;gap:4px;">
+        <span class="scColorPickerSwatches" style="display:inline-flex;flex-wrap:wrap;gap:4px;max-width:100%;">
             @foreach (var swatch in Model.Swatches)
             {
                 // A <button>, not an <a>, since anchor tags are prone to being specially
