@@ -10,16 +10,19 @@ namespace SoftConsulting.ColorPicker.Fields
     /// <summary>
     /// Content Editor field that lets an author pick a color from a configurable swatch
     /// palette, a native browser color picker, or by typing a hex value directly. The field
-    /// value is always stored normalized as "#RRGGBB".
+    /// value is always stored normalized as "#RRGGBB" (opaque) or "#RRGGBBAA" (when alpha is
+    /// set to less than fully opaque).
     ///
     /// The palette (and an optional custom rendering view) is driven by the field's Source
     /// value - see <see cref="ColorPickerSourceParser"/> for the full grammar. In short, Source
     /// is zero or more pipe-separated "Key=Value" segments:
     ///
-    ///   Palette=/sitecore/settings/color-picker/palette1|Palette=[Solid Green]:#11FF11;Red:#FF0000|View=/Views/Shared/MyColor.cshtml
+    ///   Palette=/sitecore/settings/color-picker/palette1|Palette=[Solid Green]:#11FF11;Red:#FF0000|View=/Views/Shared/MyColor.cshtml|Transparency=true
     ///
     /// "Palette" is repeatable and merges (an item path/ID whose "Colors" field holds a custom
     /// color list, or an inline custom color list); "View" overrides <see cref="DefaultVirtualPath"/>.
+    /// "Transparency=true" opts into the alpha slider and 8-digit hex editing in the default
+    /// view; omitted (or any other value) keeps the field a plain opaque color picker.
     ///
     /// Derives from the same base (Sitecore.Shell.Applications.ContentEditor.Text) as built-in
     /// simple-text-style fields, and is registered with an explicit controlSources "prefix" -
@@ -92,13 +95,19 @@ namespace SoftConsulting.ColorPicker.Fields
         {
             var id = this.ID;
             var value = NormalizeHex(this.Value) ?? string.Empty;
-            var nativeValue = string.IsNullOrEmpty(value) ? "#000000" : value;
+
+            // The native <input type="color"> cannot represent alpha at all (HTML spec
+            // limitation - it only ever accepts/emits 6-digit "#rrggbb"), so it is always fed
+            // just the RGB portion, regardless of whether the field value itself carries an
+            // alpha suffix.
+            var nativeValue = string.IsNullOrEmpty(value) ? "#000000" : value.Substring(0, 7);
 
             var model = new ColorPickerViewModel
             {
                 Id = id,
                 Value = value,
-                NativeValue = nativeValue
+                NativeValue = nativeValue,
+                AllowTransparency = parsedSource.AllowTransparency
             };
 
             foreach (var swatch in parsedSource.Swatches)

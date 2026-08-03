@@ -65,9 +65,22 @@ namespace SoftConsulting.ColorPicker.Validators
                 return GetFailedResult(ValidatorResult.Error);
             }
 
+            // When the current Source has transparency disabled, ignore alpha for the comparison
+            // - a field value saved back when Transparency=true was in effect (e.g. a swatch
+            // picked with 50% alpha) must still match its swatch's plain RGB portion once the
+            // template field is reconfigured to Transparency=false, rather than failing
+            // validation for a channel the field no longer edits.
+            var compareValue = parsedSource.AllowTransparency
+                ? normalizedValue
+                : ColorPickerUtils.GetRgbPortion(normalizedValue);
+
             foreach (var swatch in parsedSource.Swatches)
             {
-                if (string.Equals(swatch.Hex, normalizedValue, StringComparison.OrdinalIgnoreCase))
+                var swatchCompareValue = parsedSource.AllowTransparency
+                    ? swatch.Hex
+                    : ColorPickerUtils.GetRgbPortion(swatch.Hex);
+
+                if (string.Equals(swatchCompareValue, compareValue, StringComparison.OrdinalIgnoreCase))
                 {
                     return ValidatorResult.Valid;
                 }

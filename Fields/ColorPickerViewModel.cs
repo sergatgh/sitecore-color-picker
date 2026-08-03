@@ -17,6 +17,13 @@ namespace SoftConsulting.ColorPicker.Fields
 
         public string NativeValue { get; set; }
 
+        /// <summary>
+        /// Whether the field's Source opted into transparency editing ("Transparency=true").
+        /// When false (the default), the view renders a plain opaque color picker - no alpha
+        /// slider, no 8-digit hex entry.
+        /// </summary>
+        public bool AllowTransparency { get; set; }
+
         public List<ColorPickerSwatchViewModel> Swatches { get; set; } = new List<ColorPickerSwatchViewModel>();
     }
 

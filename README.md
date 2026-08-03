@@ -1,7 +1,10 @@
 # Color Picker Field
 
 A custom Sitecore Content Editor field that lets an author pick a color via a native browser
-color picker or by typing a hex value directly. The field value is stored as `#RRGGBB`.
+color picker, or by typing a hex value directly. Transparency editing (an alpha slider and
+8-digit hex entry) is opt-in per field via `Transparency=true` in the field's **Source** - see
+below; by default the field is a plain opaque color picker. When enabled, the field value is
+stored as `#RRGGBB` (opaque) or `#RRGGBBAA` (when alpha is less than fully opaque).
 
 Targets Sitecore XP **10.4.1** (.NET Framework 4.8.1).
 
@@ -9,9 +12,16 @@ Targets Sitecore XP **10.4.1** (.NET Framework 4.8.1).
 
 - **`Fields/ColorPicker.cs`** - the field control, deriving from
   `Sitecore.Shell.Applications.ContentEditor.Text`. Renders a native `<input type="color">`
-  (clicking it opens the browser/OS color dialog) plus a hex textbox kept in sync via inline,
-  self-contained JavaScript (no shared `<script>` block, since the Content Editor frequently
-  injects field markup via `innerHTML`, which never executes injected `<script>` tags).
+  (clicking it opens the browser/OS color dialog), a hex textbox, and a preview swatch, all kept
+  in sync via inline, self-contained JavaScript (no shared `<script>` block, since the Content
+  Editor frequently injects field markup via `innerHTML`, which never executes injected
+  `<script>` tags). When the field's Source sets `Transparency=true` (see below), an
+  alpha/transparency slider and a checkerboard-backed preview are added, and the hex textbox
+  accepts 8-digit `#RRGGBBAA` values; otherwise the field only ever edits/stores plain 6-digit
+  opaque colors. The native color input is an HTML platform element that cannot represent alpha
+  at all, so it is always wired to the RGB portion only; when transparency is enabled, its
+  `onchange` handler is careful to preserve whatever alpha is already stored rather than
+  resetting it to opaque.
 
   The markup, all presentation logic (per-swatch css class / border style) and the inline
   onclick/onchange script-building all live in **`Views/ColorPicker/Field.cshtml`** (the script
@@ -34,17 +44,21 @@ Targets Sitecore XP **10.4.1** (.NET Framework 4.8.1).
   `Key=Value` segments (keys are case-insensitive):
 
   ```
-  Palette=/sitecore/settings/color-picker/palette1|Palette=[Solid Green]:#11FF11;[Green]:#00FF00;Red:#FF0000|View=/Views/Shared/MyColor.cshtml
+  Palette=/sitecore/settings/color-picker/palette1|Palette=[Solid Green]:#11FF11;[Green]:#00FF00;Red:#FF0000|View=/Views/Shared/MyColor.cshtml|Transparency=true
   ```
 
+  - **`Transparency`**: `true` (or `1`) shows the alpha/transparency slider and allows 8-digit
+    `#RRGGBBAA` hex entry; omitted, or any other value, keeps the field a plain opaque color
+    picker (6-digit hex only) - this is the default.
   - **`Palette`** (repeatable, merges): either the path/ID of a **Palette** item (based on the
     `/sitecore/templates/Foundation/Color Picker/Palette` template - see below) whose **`Colors`**
     field holds the swatches, or an inline custom color list. Every `Palette` segment's swatches
     are appended in order, so multiple palettes - item-based, inline, or a mix - combine into one
     palette.
-  - Custom color list syntax: semicolon-separated `Name:RRGGBB` entries, e.g.
-    `[Solid Green]:#11FF11;[Green]:#00FF00;Red:#FF0000`. `:` divides the name (left) from the
-    color (right). Wrapping the name in `[...]` lets it contain `:` itself; without brackets the
+  - Custom color list syntax: semicolon-separated `Name:RRGGBB` (optionally `Name:RRGGBBAA` with
+    an alpha suffix) entries, e.g.
+    `[Solid Green]:#11FF11;[Green]:#00FF00;Red:#FF0000;Faded Blue:#0000FF80`. `:` divides the name
+    (left) from the color (right). Wrapping the name in `[...]` lets it contain `:` itself; without brackets the
     name must not contain `:` - such an entry is ambiguous and is skipped, same as an entry
     whose color half doesn't parse as a hex color.
   - **`View`**: a virtual path to a Razor view that overrides the field's default rendering view
@@ -106,6 +120,9 @@ serialization push required.
    `Palette=/sitecore/system/Modules/Color Picker/Palettes/Material Design` (a couple of these are
    provisioned automatically - see `InitializeColorPickerPalette.cs` above - or create your own
    under the `Palette` template, filling in the **`Colors`** Name Value List field with one
-   `name` = `RRGGBB` pair per swatch).
+   `name` = `RRGGBB` pair per swatch). Add `Transparency=true` to the Source if this field should
+   also support transparency - it's off by default.
 3. Open an item based on that template - the field renders a color swatch button (native picker)
-   and a hex textbox; either one updates the field value, which persists on Save.
+   and a hex textbox; either updates the field value, which persists on Save. If `Transparency`
+   is enabled, an alpha slider is also shown, and the preview swatch gets a checkerboard backdrop
+   so transparency is visible.

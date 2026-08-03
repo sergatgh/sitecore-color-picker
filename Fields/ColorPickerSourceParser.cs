@@ -20,20 +20,24 @@ namespace SoftConsulting.ColorPicker.Fields
     ///
     /// Grammar - zero or more pipe-separated "Key=Value" segments (keys are case-insensitive):
     ///
-    ///   Palette=&lt;item path or {ID}&gt; | Palette=&lt;custom color list&gt; | View=&lt;virtual path&gt;
+    ///   Palette=&lt;item path or {ID}&gt; | Palette=&lt;custom color list&gt; | View=&lt;virtual path&gt; | Transparency=true
     ///
     /// - "Palette" (repeatable): either the path/ID of an item whose "Colors" field (a "Name
     ///   Value List" field - see the "Palette" template at
     ///   /sitecore/templates/Foundation/Color Picker/Palette) holds name/color pairs, or an
     ///   inline custom color list. Every "Palette" segment's swatches are appended in order, so
     ///   multiple palettes - item-based, inline, or a mix - merge into one combined list.
-    /// - Custom color list syntax: semicolon-separated "Name:RRGGBB" entries, e.g.
-    ///   "[Solid Green]:#11FF11;[Green]:#00FF00;Red:#FF0000". ':' divides the name (left) from
-    ///   the color (right). Wrapping the name in square brackets lets it contain ':' itself;
+    /// - Custom color list syntax: semicolon-separated "Name:RRGGBB" (or "Name:RRGGBBAA" with
+    ///   an optional alpha suffix) entries, e.g.
+    ///   "[Solid Green]:#11FF11;[Green]:#00FF00;Red:#FF0000;Faded:#0000FF80". ':' divides the
+    ///   name (left) from the color (right). Wrapping the name in square brackets lets it contain ':' itself;
     ///   without brackets the name must not contain ':' - such an entry is ambiguous and is
     ///   skipped, same as an entry whose color half does not parse as a hex color.
     /// - "View": a virtual path to a Razor view that overrides the field control's default
     ///   rendering view. The last "View" segment wins if more than one is given.
+    /// - "Transparency": "true"/"1" enables the alpha slider and 8-digit hex editing in the
+    ///   default view; anything else (including omitting the key entirely) keeps the field a
+    ///   plain opaque color picker. Defaults to false - transparency editing is opt-in.
     /// - Any other "Key=Value" segment is treated as one legacy literal swatch
     ///   ("Name=RRGGBB"), preserving the original Source format this field started with.
     /// - When the whole Source contains neither '|' nor '=', it is treated as a single Palette
@@ -90,6 +94,10 @@ namespace SoftConsulting.ColorPicker.Fields
                 else if (string.Equals(key, "View", StringComparison.OrdinalIgnoreCase))
                 {
                     result.ViewPath = value;
+                }
+                else if (string.Equals(key, "Transparency", StringComparison.OrdinalIgnoreCase))
+                {
+                    result.AllowTransparency = ParseBoolean(value);
                 }
                 else
                 {
@@ -214,6 +222,20 @@ namespace SoftConsulting.ColorPicker.Fields
             }
         }
 
+        // Accepts the same boolean spellings Sitecore Source strings commonly use: "true"/"false"
+        // (any case, via bool.TryParse) as well as the bare "1" checkbox-field convention. Any
+        // other spelling (including an empty/unrecognized value) is treated as "false", keeping
+        // transparency opt-in by default.
+        protected virtual bool ParseBoolean(string value)
+        {
+            if (bool.TryParse(value, out var flag))
+            {
+                return flag;
+            }
+
+            return string.Equals(value, "1", StringComparison.Ordinal);
+        }
+
         // Splits one "Name:RRGGBB" (or "[Name]:RRGGBB") entry. Returns false for anything
         // malformed or ambiguous, which the caller treats as "skip this entry".
         protected virtual bool TryParseColorEntry(string entry, out string name, out string hex)
@@ -265,5 +287,11 @@ namespace SoftConsulting.ColorPicker.Fields
         public List<ColorPickerSwatchViewModel> Swatches { get; } = new List<ColorPickerSwatchViewModel>();
 
         public string ViewPath { get; set; }
+
+        /// <summary>
+        /// Whether the field's Source opted into transparency editing via "Transparency=true".
+        /// Defaults to false - a plain opaque color picker, no alpha slider or 8-digit hex entry.
+        /// </summary>
+        public bool AllowTransparency { get; set; }
     }
 }

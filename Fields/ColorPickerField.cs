@@ -8,8 +8,10 @@ namespace SoftConsulting.ColorPicker.Fields
     /// Data-API wrapper for the "Color Picker" field type. Use this in code to read and write
     /// color field values on Sitecore items, the same way TextField wraps single-line text.
     ///
-    /// Values are stored and returned as upper-case "#RRGGBB". The implicit cast from
-    /// Sitecore.Data.Fields.Field follows the same pattern as Sitecore's built-in wrappers:
+    /// Values are stored and returned as upper-case "#RRGGBB" (opaque) or "#RRGGBBAA" (when
+    /// alpha is not fully opaque) - see <see cref="A"/>/<see cref="IsOpaque"/>/<see cref="SetFromRgba"/>.
+    /// The implicit cast from Sitecore.Data.Fields.Field follows the same pattern as Sitecore's
+    /// built-in wrappers:
     ///   ColorPickerField color = item.Fields["Background Color"];
     ///
     /// Registered in SoftConsulting.ColorPicker.Fields.config:
@@ -35,7 +37,7 @@ namespace SoftConsulting.ColorPicker.Fields
         // -----------------------------------------------------------------------
 
         /// <summary>
-        /// Normalizes the value to upper-case "#RRGGBB" before persisting.
+        /// Normalizes the value to upper-case "#RRGGBB" or "#RRGGBBAA" before persisting.
         /// Null, empty, or invalid hex strings clear the field.
         /// </summary>
         protected override void SetValue(string value)
@@ -60,26 +62,48 @@ namespace SoftConsulting.ColorPicker.Fields
         /// <summary>Blue channel, 0–255. Returns 0 when <see cref="IsEmpty"/>.</summary>
         public byte B => IsEmpty ? (byte)0 : Convert.ToByte(InnerField.Value.Substring(5, 2), 16);
 
+        /// <summary>
+        /// Alpha channel, 0–255. 255 (fully opaque) when the stored value has no alpha suffix,
+        /// or when <see cref="IsEmpty"/>.
+        /// </summary>
+        public virtual byte A => IsEmpty || InnerField.Value.Length < 9
+            ? (byte)255
+            : Convert.ToByte(InnerField.Value.Substring(7, 2), 16);
+
+        /// <summary>True when the stored color has no alpha suffix, i.e. <see cref="A"/> == 255.</summary>
+        public virtual bool IsOpaque => A == 255;
+
         // -----------------------------------------------------------------------
         // Conversion — read
         // -----------------------------------------------------------------------
 
         /// <summary>
-        /// Returns the stored color as a fully opaque <see cref="System.Drawing.Color"/>.
+        /// Returns the stored color as a <see cref="System.Drawing.Color"/>, honoring alpha.
         /// Returns <see cref="Color.Empty"/> when <see cref="IsEmpty"/>.
         /// </summary>
-        public Color ToRgb()
-            => IsEmpty ? Color.Empty : Color.FromArgb(255, R, G, B);
+        public virtual Color ToRgb()
+            => IsEmpty ? Color.Empty : Color.FromArgb(A, R, G, B);
 
         /// <summary>
-        /// Returns the stored "#RRGGBB" string. Equivalent to reading <see cref="CustomField.Value"/>.
-        /// Returns an empty string when <see cref="IsEmpty"/>.
+        /// Returns the 32-bit ARGB value (0xAARRGGBB), e.g. a 50%-alpha orange becomes
+        /// 0x80FF5A00. Returned as <see cref="long"/> rather than <see cref="int"/> to avoid
+        /// sign-bit ambiguity once the alpha byte can exceed 0x7F. Returns 0 when
+        /// <see cref="IsEmpty"/>. Unlike <see cref="ToDecimal"/>, this includes alpha.
+        /// </summary>
+        public virtual long ToArgb()
+            => IsEmpty ? 0 : ((long)A << 24) | (uint)((R << 16) | (G << 8) | B);
+
+        /// <summary>
+        /// Returns the stored "#RRGGBB" or "#RRGGBBAA" string. Equivalent to reading
+        /// <see cref="CustomField.Value"/>. Returns an empty string when <see cref="IsEmpty"/>.
         /// </summary>
         public string ToHex()
             => InnerField.Value;
 
         /// <summary>
-        /// Returns the 24-bit decimal integer (e.g. #FF5A00 → 16734720).
+        /// Returns the 24-bit decimal integer (e.g. #FF5A00 → 16734720). RGB-only - alpha is
+        /// not representable through this accessor, so a translucent color's alpha is silently
+        /// dropped here; use <see cref="ToArgb"/> when alpha matters.
         /// Returns 0 when <see cref="IsEmpty"/>.
         /// </summary>
         public int ToDecimal()
@@ -186,17 +210,38 @@ namespace SoftConsulting.ColorPicker.Fields
         }
 
         /// <summary>
-        /// Validates and normalizes a hex string ("#RRGGBB" or "RRGGBB", case-insensitive)
-        /// then stores it as the field value.
+        /// Sets the field value from individual RGBA byte components (each in [0, 255]).
+        /// Stores the 6-digit opaque form when <paramref name="a"/> is 255, otherwise the
+        /// 8-digit "#RRGGBBAA" form.
         /// </summary>
-        /// <exception cref="ArgumentException"><paramref name="hex"/> is not a valid 6-digit hex color.</exception>
+        /// <exception cref="ArgumentOutOfRangeException">Any component is outside [0, 255].</exception>
+        public virtual void SetFromRgba(int r, int g, int b, int a)
+        {
+            ValidateComponent(a, nameof(a));
+            if (a == 255)
+            {
+                SetFromRgb(r, g, b);
+                return;
+            }
+
+            ValidateComponent(r, nameof(r));
+            ValidateComponent(g, nameof(g));
+            ValidateComponent(b, nameof(b));
+            InnerField.Value = $"#{r:X2}{g:X2}{b:X2}{a:X2}";
+        }
+
+        /// <summary>
+        /// Validates and normalizes a hex string ("#RRGGBB"/"RRGGBB" or "#RRGGBBAA"/"RRGGBBAA",
+        /// case-insensitive) then stores it as the field value.
+        /// </summary>
+        /// <exception cref="ArgumentException"><paramref name="hex"/> is not a valid hex color.</exception>
         public void SetFromHex(string hex)
         {
             var normalized = NormalizeHex(hex);
             if (normalized == null)
             {
                 throw new ArgumentException(
-                    $"'{hex}' is not a valid 6-digit hex color.", nameof(hex));
+                    $"'{hex}' is not a valid hex color (#RRGGBB or #RRGGBBAA).", nameof(hex));
             }
 
             InnerField.Value = normalized;
@@ -204,6 +249,8 @@ namespace SoftConsulting.ColorPicker.Fields
 
         /// <summary>
         /// Sets the field value from a 24-bit integer (e.g. 0xFF5A00 stores "#FF5A00").
+        /// RGB-only - there is no alpha-aware overload of this accessor; use
+        /// <see cref="SetFromRgba"/> when alpha matters.
         /// </summary>
         /// <exception cref="ArgumentOutOfRangeException"><paramref name="colorValue"/> is outside [0, 0xFFFFFF].</exception>
         public void SetFromDecimal(int colorValue)
