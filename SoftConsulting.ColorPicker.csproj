@@ -146,6 +146,7 @@
     <Compile Include="Fields\ColorPickerSourceParser.cs" />
     <Compile Include="Fields\ColorPickerUtils.cs" />
     <Compile Include="Fields\ColorPickerViewModel.cs" />
+    <Compile Include="Infrastructure\ColorPickerServicesConfigurator.cs" />
     <Compile Include="Infrastructure\ContentDatabaseResolver.cs" />
     <Compile Include="Infrastructure\RazorViewRenderer.cs" />
     <Compile Include="Processors\InitializeColorPickerFieldType.cs" />

@@ -3,7 +3,9 @@ namespace SoftConsulting.ColorPicker.Fields
     using System;
     using System.Web;
     using System.Web.UI;
+    using Microsoft.Extensions.DependencyInjection;
     using Sitecore.Data;
+    using Sitecore.DependencyInjection;
     using Sitecore.Shell.Applications.ContentEditor;
     using SoftConsulting.ColorPicker.Infrastructure;
 
@@ -83,7 +85,16 @@ namespace SoftConsulting.ColorPicker.Fields
             }
         }
 
-        protected virtual IColorPickerSourceParser ColorPickerSourceParser => new ColorPickerSourceParser();
+        // The Content Editor's Sheer/XML control factory creates this class via reflection
+        // against its parameterless constructor, not through Sitecore's DI container, so the
+        // parser cannot be constructor-injected here the way it is for the resolve="true"
+        // initialize-pipeline processors - it is instead pulled from Sitecore's dependency
+        // resolver (ServiceLocator) at the point of use. See
+        // SoftConsulting.ColorPicker.Infrastructure.ColorPickerServicesConfigurator for the
+        // registration and SoftConsulting.ColorPicker.Validators.SwatchValidator for the same
+        // pattern applied to a validator, which is likewise built outside the container.
+        protected virtual IColorPickerSourceParser ColorPickerSourceParser
+            => ServiceLocator.ServiceProvider.GetService<IColorPickerSourceParser>() ?? new ColorPickerSourceParser();
 
         /// <summary>
         /// Builds the data handed to the rendering view - the actual Sitecore field value

@@ -2,9 +2,11 @@ namespace SoftConsulting.ColorPicker.Validators
 {
     using System;
     using System.Runtime.Serialization;
+    using Microsoft.Extensions.DependencyInjection;
     using Sitecore.Data;
     using Sitecore.Data.Items;
     using Sitecore.Data.Validators;
+    using Sitecore.DependencyInjection;
     using SoftConsulting.ColorPicker.Fields;
 
     /// <summary>
@@ -92,7 +94,14 @@ namespace SoftConsulting.ColorPicker.Validators
             return GetFailedResult(ValidatorResult.Error);
         }
 
-        protected virtual IColorPickerSourceParser ColorPickerSourceParser => new ColorPickerSourceParser();
+        // Sitecore creates validator instances via .NET serialization (the SerializationInfo
+        // constructor above) when a validator item is loaded, not through the DI container, so
+        // the parser cannot be constructor-injected here - it is instead pulled from Sitecore's
+        // dependency resolver (ServiceLocator) at the point of use. See
+        // SoftConsulting.ColorPicker.Infrastructure.ColorPickerServicesConfigurator for the
+        // registration.
+        protected virtual IColorPickerSourceParser ColorPickerSourceParser
+            => ServiceLocator.ServiceProvider.GetService<IColorPickerSourceParser>() ?? new ColorPickerSourceParser();
 
         protected override ValidatorResult GetMaxValidatorResult()
             => GetFailedResult(ValidatorResult.Error);

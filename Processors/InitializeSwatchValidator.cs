@@ -30,6 +30,20 @@ namespace SoftConsulting.ColorPicker.Processors
     /// </summary>
     public class InitializeSwatchValidator
     {
+        private readonly IContentDatabaseResolver contentDatabaseResolver;
+
+        /// <summary>
+        /// <paramref name="contentDatabaseResolver"/> is supplied directly from
+        /// SoftConsulting.ColorPicker.Initialize.config, via a nested, typed &lt;param&gt;
+        /// element on this processor's &lt;processor&gt; node - not resolved through Sitecore's
+        /// DI container. The fallback below only matters if this class is ever constructed some
+        /// other way (e.g. directly in a test).
+        /// </summary>
+        public InitializeSwatchValidator(IContentDatabaseResolver contentDatabaseResolver)
+        {
+            this.contentDatabaseResolver = contentDatabaseResolver ?? new ContentDatabaseResolver();
+        }
+
         // The "Field Rules" folder already exists in every stock Sitecore install.
         private const string FieldRulesFolderPath = "/sitecore/system/Settings/Validation Rules/Field Rules";
         private const string ValidatorFolderName = "Color Picker";
@@ -121,7 +135,7 @@ namespace SoftConsulting.ColorPicker.Processors
             return folder;
         }
 
-        protected virtual IContentDatabaseResolver ContentDatabaseResolver => new ContentDatabaseResolver();
+        protected virtual IContentDatabaseResolver ContentDatabaseResolver => this.contentDatabaseResolver;
 
         /// <summary>
         /// Resolves the database content editors author in, via the "shell" site's

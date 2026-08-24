@@ -28,6 +28,20 @@ namespace SoftConsulting.ColorPicker.Processors
     /// </summary>
     public class InitializeColorPickerPalette
     {
+        private readonly IContentDatabaseResolver contentDatabaseResolver;
+
+        /// <summary>
+        /// <paramref name="contentDatabaseResolver"/> is supplied directly from
+        /// SoftConsulting.ColorPicker.Initialize.config, via a nested, typed &lt;param&gt;
+        /// element on this processor's &lt;processor&gt; node - not resolved through Sitecore's
+        /// DI container. The fallback below only matters if this class is ever constructed some
+        /// other way (e.g. directly in a test).
+        /// </summary>
+        public InitializeColorPickerPalette(IContentDatabaseResolver contentDatabaseResolver)
+        {
+            this.contentDatabaseResolver = contentDatabaseResolver ?? new ContentDatabaseResolver();
+        }
+
         private const string TemplatesFoundationFolderPath = "/sitecore/templates/Foundation";
         private const string TemplatesModuleFolderPath = TemplatesFoundationFolderPath + "/Color Picker";
         private const string PaletteTemplateName = "Palette";
@@ -69,7 +83,7 @@ namespace SoftConsulting.ColorPicker.Processors
             }
         }
 
-        protected virtual IContentDatabaseResolver ContentDatabaseResolver => new ContentDatabaseResolver();
+        protected virtual IContentDatabaseResolver ContentDatabaseResolver => this.contentDatabaseResolver;
 
         protected virtual TemplateItem EnsurePaletteTemplate(Database database)
         {
