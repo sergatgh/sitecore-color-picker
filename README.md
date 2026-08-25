@@ -126,3 +126,57 @@ serialization push required.
    and a hex textbox; either updates the field value, which persists on Save. If `Transparency`
    is enabled, an alpha slider is also shown, and the preview swatch gets a checkerboard backdrop
    so transparency is visible.
+
+## Uninstalling
+
+This module has no Sitecore package/installer to reverse - every item it provisions
+(`InitializeColorPickerFieldType.cs`, `InitializeSwatchValidator.cs`,
+`InitializeColorPickerPalette.cs` above) is created idempotently on app start, so removing it
+safely needs its own tool rather than an anti-package or a manual item hunt.
+
+Open **`/sitecore/admin/ColorPickerUninstall.aspx`** as a Sitecore administrator (any other user
+gets a 403 from both the page and the JSON API behind it - neither depends on any Sitecore item,
+only this authentication check, so the tool can never end up "half removed" the way a Control
+Panel button that points at a deleted item could). It's a 4-step wizard, each step scanning and
+letting you act one row (or all rows) at a time before you move on:
+
+1. **Template fields typed "Color Picker"** - removing the field type while any of these exist
+   would leave them unable to resolve their editor. **Convert** (per field, or all at once)
+   bulk-changes Type to "Single-Line Text" - lossless, since the field only ever stores a plain
+   hex string (`#RRGGBB`/`#RRGGBBAA`).
+2. **Fields using the "Color Picker Swatch" validator** - detected via Sitecore's own **Link
+   Database** (`Sitecore.Globals.LinkDatabase.GetReferrers`), the same index Sitecore's UI uses
+   for "this item is referenced elsewhere". Not blocking - the validator item is removed in step
+   4 regardless - but **Remove link** (per field, or all at once) detaches just that reference,
+   leaving any other validators assigned to the same field untouched. *If this step looks
+   incomplete, the Link Database may be stale - rebuild it via Control Panel → Indexing → Rebuild
+   Link Database, then re-scan.*
+3. **Custom Palette items** - items based on the `Palette` template other than the two seeded
+   samples. Deleting the `Palette` template while these exist would orphan them, so it's kept in
+   place unless you remove them here first (per item, or all at once).
+4. **Preview and removal** - a manifest of exactly what will be deleted (and, if custom palettes
+   were left in step 3, a note that the `Palette` template will be kept so they aren't orphaned),
+   then a confirmation prompt before the actual, bottom-up, idempotent removal (mirroring how the
+   bootstrap processors create things top-down): the field type item and its category folder in
+   `core`; the swatch validator item and its folder; the two sample Palette items and the
+   module's `Palettes`/`Color Picker` folders; and, unless custom palettes were left in place,
+   the `Colors` field, `Data` section, `Palette` template, and their folders (including
+   `Foundation`, but only if nothing else lives under it).
+
+What it **cannot** do is delete the module's own files - `SoftConsulting.ColorPicker.dll`, the
+`App_Config\Include\SoftConsulting\ColorPicker` includes, `Views\ColorPicker`, and the admin
+page/API/assets themselves are all loaded/held open by the very application process serving the
+removal request, so nothing running inside that process can delete them. Once step 4 finishes,
+the page prints the exact file paths (computed at request time, not hardcoded) to delete by hand,
+followed by an application pool recycle.
+
+Each Content Editor link in the wizard uses the classic deep-link format
+(`/sitecore/shell/Applications/Content Editor.aspx?sc_bw=1&id=...&db=...`) - stable across recent
+Sitecore versions, but worth confirming against your own instance if a link doesn't behave as
+expected.
+
+**Sitecore PowerShell Extensions**: `Tools/Remove-ColorPickerModule.ps1` is a thin wrapper around
+the same two services (`IColorPickerUsageScanner`/`IColorPickerUninstaller`), for anyone who'd
+rather drive the scan/convert/detach/remove flow from the SPE ISE than the admin page - see the
+script's own header comment for its `-Scan`/`-ConvertFields`/`-DetachValidatorReferences`/
+`-DeleteCustomPalettes`/`-Remove` switches.

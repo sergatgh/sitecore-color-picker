@@ -152,6 +152,12 @@
     <Compile Include="Processors\InitializeColorPickerFieldType.cs" />
     <Compile Include="Processors\InitializeColorPickerPalette.cs" />
     <Compile Include="Processors\InitializeSwatchValidator.cs" />
+    <Compile Include="sitecore\admin\ColorPicker\Uninstall.aspx.cs">
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="sitecore\admin\ColorPicker\UninstallApi.ashx.cs" />
+    <Compile Include="Uninstall\ColorPickerUninstaller.cs" />
+    <Compile Include="Uninstall\ColorPickerUsageScanner.cs" />
     <Compile Include="Validators\SwatchValidator.cs" />
   </ItemGroup>
   <ItemGroup>
@@ -161,6 +167,10 @@
   <ItemGroup>
     <Content Include="App_Config\Include\SoftConsulting\ColorPicker\SoftConsulting.ColorPicker.Initialize.config" />
     <Content Include="App_Config\Include\SoftConsulting\ColorPicker\SoftConsulting.ColorPicker.Fields.config" />
+    <Content Include="sitecore\admin\ColorPicker\Uninstall.aspx" />
+    <Content Include="sitecore\admin\ColorPicker\Uninstall.css" />
+    <Content Include="sitecore\admin\ColorPicker\Uninstall.js" />
+    <Content Include="sitecore\admin\ColorPicker\UninstallApi.ashx" />
     <Content Include="Views\ColorPicker\Field.cshtml" />
     <Content Include="Views\Web.config" />
   </ItemGroup>

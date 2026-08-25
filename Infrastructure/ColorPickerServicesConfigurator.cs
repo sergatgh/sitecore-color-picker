@@ -3,6 +3,7 @@ namespace SoftConsulting.ColorPicker.Infrastructure
     using Microsoft.Extensions.DependencyInjection;
     using Sitecore.DependencyInjection;
     using SoftConsulting.ColorPicker.Fields;
+    using SoftConsulting.ColorPicker.Uninstall;
 
     /// <summary>
     /// Registers this module's services with Sitecore's dependency injection container. Wired up
@@ -27,6 +28,14 @@ namespace SoftConsulting.ColorPicker.Infrastructure
     /// SoftConsulting.ColorPicker.Initialize.config supplies a <see cref="ContentDatabaseResolver"/>
     /// instance for that parameter directly via a nested, typed &lt;param&gt; element rather than
     /// resolving it here.
+    ///
+    /// <see cref="IColorPickerUsageScanner"/> and <see cref="IColorPickerUninstaller"/> are
+    /// registered for the same "resolve via ServiceLocator" reason: their three consumers -
+    /// the sitecore/admin/ColorPickerUninstall.aspx admin page and its
+    /// sitecore/admin/ColorPickerUninstallApi.ashx JSON API (an ASP.NET Page and an
+    /// IHttpHandler, neither DI-constructed) and Tools/Remove-ColorPickerModule.ps1 (an SPE
+    /// script resolving services straight from the same container) - cannot be
+    /// constructor-injected either.
     /// </summary>
     public class ColorPickerServicesConfigurator : IServicesConfigurator
     {
@@ -34,6 +43,8 @@ namespace SoftConsulting.ColorPicker.Infrastructure
         {
             serviceCollection.AddSingleton<IColorPickerSourceParser, ColorPickerSourceParser>();
             serviceCollection.AddSingleton<IContentDatabaseResolver, ContentDatabaseResolver>();
+            serviceCollection.AddSingleton<IColorPickerUsageScanner, ColorPickerUsageScanner>();
+            serviceCollection.AddSingleton<IColorPickerUninstaller, ColorPickerUninstaller>();
         }
     }
 }
