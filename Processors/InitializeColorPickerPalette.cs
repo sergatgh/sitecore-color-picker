@@ -25,6 +25,14 @@ namespace SoftConsulting.ColorPicker.Processors
     /// Runs on every application start; re-checks (and repairs) the template's field values and
     /// only creates the sample palette items the first time - any later edits an author makes to
     /// those items are left alone.
+    ///
+    /// Every item this bootstrap creates gets a fixed id (see the *ItemId fields below),
+    /// generated once and passed explicitly to Item.Add, rather than whatever random id Item.Add
+    /// would otherwise assign - see the equivalent note on
+    /// <see cref="InitializeColorPickerFieldType"/> for why. "Foundation" is the one folder here
+    /// that other, unrelated modules may also create: EnsureItem only ever assigns the fixed id
+    /// on first creation, so if another module gets there first, this bootstrap simply adopts the
+    /// existing item by path as before - it never overwrites or moves an id.
     /// </summary>
     public class InitializeColorPickerPalette
     {
@@ -62,6 +70,16 @@ namespace SoftConsulting.ColorPicker.Processors
         private static readonly ID TemplateFolderTemplateId = Sitecore.TemplateIDs.TemplateFolder;
         private static readonly ID FolderTemplateId = Sitecore.TemplateIDs.Folder;
 
+        private static readonly ID FoundationFolderItemId = new ID("{9E5C192D-D12E-4E5B-A5EF-323313EC8F88}");
+        private static readonly ID TemplatesModuleFolderItemId = new ID("{FC69C389-BCA6-4252-A742-436D6413A59B}");
+        private static readonly ID PaletteTemplateItemId = new ID("{692EC644-3522-42DA-9BE1-3BD0E7D55AF1}");
+        private static readonly ID DataSectionItemId = new ID("{0B641964-80E9-42A8-B7FD-1030BAE1D93D}");
+        private static readonly ID ColorsFieldItemId = new ID("{C481680C-7BCB-420C-9DC1-87F7220E3AF8}");
+        private static readonly ID ColorPickerModuleFolderItemId = new ID("{6F97E656-CFC0-43A9-BCB0-883316C71F13}");
+        private static readonly ID PalettesModuleFolderItemId = new ID("{D7C6FDCE-60EE-47E6-9054-9A1A0102B6DF}");
+        private static readonly ID MaterialDesignPaletteItemId = new ID("{57DAA0F7-77CC-473E-93EC-0E71E7DEFF9D}");
+        private static readonly ID FlatUiColorsPaletteItemId = new ID("{5DA7B7C5-0CAF-4E66-9CC7-8DB43C063B71}");
+
         public virtual void Process(PipelineArgs args)
         {
             using (new SecurityDisabler())
@@ -94,12 +112,12 @@ namespace SoftConsulting.ColorPicker.Processors
                 return null;
             }
 
-            if (EnsureItem(database, TemplatesFoundationFolderPath, "Foundation", templateFolderTemplate) == null)
+            if (EnsureItem(database, TemplatesFoundationFolderPath, "Foundation", templateFolderTemplate, FoundationFolderItemId) == null)
             {
                 return null;
             }
 
-            if (EnsureItem(database, TemplatesModuleFolderPath, "Color Picker", templateFolderTemplate) == null)
+            if (EnsureItem(database, TemplatesModuleFolderPath, "Color Picker", templateFolderTemplate, TemplatesModuleFolderItemId) == null)
             {
                 return null;
             }
@@ -111,7 +129,7 @@ namespace SoftConsulting.ColorPicker.Processors
                 return null;
             }
 
-            var paletteTemplateItem = EnsureItem(database, PaletteTemplatePath, PaletteTemplateName, templateTemplate);
+            var paletteTemplateItem = EnsureItem(database, PaletteTemplatePath, PaletteTemplateName, templateTemplate, PaletteTemplateItemId);
             if (paletteTemplateItem == null)
             {
                 return null;
@@ -139,7 +157,7 @@ namespace SoftConsulting.ColorPicker.Processors
                 return false;
             }
 
-            if (EnsureItem(database, DataSectionPath, DataSectionName, sectionTemplate) == null)
+            if (EnsureItem(database, DataSectionPath, DataSectionName, sectionTemplate, DataSectionItemId) == null)
             {
                 return false;
             }
@@ -151,7 +169,7 @@ namespace SoftConsulting.ColorPicker.Processors
                 return false;
             }
 
-            var colorsField = EnsureItem(database, ColorsFieldPath, ColorsFieldName, fieldTemplate);
+            var colorsField = EnsureItem(database, ColorsFieldPath, ColorsFieldName, fieldTemplate, ColorsFieldItemId);
             if (colorsField == null)
             {
                 return false;
@@ -180,20 +198,20 @@ namespace SoftConsulting.ColorPicker.Processors
                 return;
             }
 
-            var colorPickerFolder = EnsureItem(database, ColorPickerModuleFolderPath, "Color Picker", folderTemplate);
+            var colorPickerFolder = EnsureItem(database, ColorPickerModuleFolderPath, "Color Picker", folderTemplate, ColorPickerModuleFolderItemId);
             if (colorPickerFolder == null)
             {
                 return;
             }
 
-            var palettesFolder = EnsureItem(database, PaletteModuleFolderPath, "Palettes", folderTemplate);
+            var palettesFolder = EnsureItem(database, PaletteModuleFolderPath, "Palettes", folderTemplate, PalettesModuleFolderItemId);
             if (palettesFolder == null)
             {
                 return;
             }
 
-            EnsureSamplePalette(database, palettesFolder, paletteTemplate, "Material Design", MaterialDesignPalette());
-            EnsureSamplePalette(database, palettesFolder, paletteTemplate, "Flat UI Colors", FlatUiColorsPalette());
+            EnsureSamplePalette(database, palettesFolder, paletteTemplate, "Material Design", MaterialDesignPaletteItemId, MaterialDesignPalette());
+            EnsureSamplePalette(database, palettesFolder, paletteTemplate, "Flat UI Colors", FlatUiColorsPaletteItemId, FlatUiColorsPalette());
         }
 
         protected virtual void EnsureSamplePalette(
@@ -201,6 +219,7 @@ namespace SoftConsulting.ColorPicker.Processors
             Item parent,
             TemplateItem template,
             string name,
+            ID itemId,
             NameValueCollection colors)
         {
             var path = parent.Paths.FullPath + "/" + name;
@@ -209,7 +228,7 @@ namespace SoftConsulting.ColorPicker.Processors
                 return;
             }
 
-            var item = parent.Add(name, template);
+            var item = parent.Add(name, template, itemId);
             using (new EditContext(item))
             {
                 new NameValueListField(item.Fields[ColorsFieldName]).NameValues = colors;
@@ -218,10 +237,12 @@ namespace SoftConsulting.ColorPicker.Processors
             Log.Info("ColorPicker bootstrap: created '" + item.Paths.FullPath + "'.", this);
         }
 
-        // Creates the item at "path" from "template" if it doesn't already exist. The item's
-        // parent (everything in "path" up to the last segment) must already exist - callers are
-        // responsible for ensuring ancestors first, same as the rest of this bootstrap.
-        protected virtual Item EnsureItem(Database database, string path, string name, TemplateItem template)
+        // Creates the item at "path" from "template" (with the fixed "itemId") if it doesn't
+        // already exist. The item's parent (everything in "path" up to the last segment) must
+        // already exist - callers are responsible for ensuring ancestors first, same as the rest
+        // of this bootstrap. When the item already exists (e.g. "Foundation" created by another
+        // module first), "itemId" is simply ignored - its existing id is left untouched.
+        protected virtual Item EnsureItem(Database database, string path, string name, TemplateItem template, ID itemId)
         {
             var item = database.GetItem(path);
             if (item != null)
@@ -237,7 +258,7 @@ namespace SoftConsulting.ColorPicker.Processors
                 return null;
             }
 
-            item = parent.Add(name, template);
+            item = parent.Add(name, template, itemId);
             Log.Info("ColorPicker bootstrap: created '" + item.Paths.FullPath + "'.", this);
             return item;
         }

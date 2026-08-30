@@ -165,8 +165,8 @@
     <None Include="web.config" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="App_Config\Include\SoftConsulting\ColorPicker\SoftConsulting.ColorPicker.Initialize.config" />
-    <Content Include="App_Config\Include\SoftConsulting\ColorPicker\SoftConsulting.ColorPicker.Fields.config" />
+    <Content Include="App_Config\Modules\ColorPicker\SoftConsulting.ColorPicker.Initialize.config.disabled" />
+    <Content Include="App_Config\Modules\ColorPicker\SoftConsulting.ColorPicker.Fields.config" />
     <Content Include="sitecore\admin\ColorPicker\Uninstall.aspx" />
     <Content Include="sitecore\admin\ColorPicker\Uninstall.css" />
     <Content Include="sitecore\admin\ColorPicker\Uninstall.js" />

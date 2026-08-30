@@ -363,7 +363,7 @@ namespace SoftConsulting.ColorPicker.Uninstall
 
             // Views/Web.config is shared MVC plumbing, not exclusive to this module, so it is
             // deliberately left off this list.
-            AddMappedPathIfExists(files, "~/App_Config/Include/SoftConsulting/ColorPicker");
+            AddMappedPathIfExists(files, "~/App_Config/Modules/ColorPicker");
             AddMappedPathIfExists(files, "~/Views/ColorPicker");
             AddMappedPathIfExists(files, "~/sitecore/admin/ColorPicker");
 

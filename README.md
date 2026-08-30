@@ -164,7 +164,7 @@ letting you act one row (or all rows) at a time before you move on:
    `Foundation`, but only if nothing else lives under it).
 
 What it **cannot** do is delete the module's own files - `SoftConsulting.ColorPicker.dll`, the
-`App_Config\Include\SoftConsulting\ColorPicker` includes, `Views\ColorPicker`, and the admin
+`App_Config\Modules\ColorPicker` includes, `Views\ColorPicker`, and the admin
 page/API/assets themselves are all loaded/held open by the very application process serving the
 removal request, so nothing running inside that process can delete them. Once step 4 finishes,
 the page prints the exact file paths (computed at request time, not hardcoded) to delete by hand,

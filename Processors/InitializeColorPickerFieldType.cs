@@ -25,12 +25,20 @@ namespace SoftConsulting.ColorPicker.Processors
     /// as the built-in categories like "Simple Types") and "Color Picker" underneath it - the
     /// field-type dropdown only treats grandchildren of "/sitecore/system/Field types" as
     /// selectable, so the new field type cannot be a direct child of the root.
+    ///
+    /// <see cref="CategoryItemId"/> and <see cref="FieldTypeItemId"/> are different from the ids
+    /// above: they are fixed ids this module owns for the two items *it* creates, generated once
+    /// (not read from any live instance) and passed explicitly to Item.Add. Without this, every
+    /// environment - and every uninstall/reinstall cycle on the same environment - would end up
+    /// with a different random id for what is logically the same item.
     /// </summary>
     public class InitializeColorPickerFieldType
     {
         private static readonly ID FieldTypesRootId = new ID("{76E6D8C7-1F93-4712-872B-DA3C96B808F2}");
         private static readonly ID TemplateFieldTypeId = new ID("{F8A17D6A-118E-4CD7-B5F5-88FF37A4F237}");
         private static readonly ID FolderTemplateId = new ID("{A87A00B1-E6DB-45AB-8B54-636FEC3B5523}");
+        private static readonly ID CategoryItemId = new ID("{61756277-EC4A-4F4F-B3F2-47D1F84576A9}");
+        private static readonly ID FieldTypeItemId = new ID("{4F72C1B7-C2B2-4D4A-B971-CAB2477696F4}");
         private const string CategoryItemPath = "/sitecore/system/Field types/Custom Field Types";
         private const string FieldTypeItemPath = CategoryItemPath + "/Color Picker";
         private const string IconPath = "/~/icon/softwarev2/32x32/color_wheel.png";
@@ -86,11 +94,11 @@ namespace SoftConsulting.ColorPicker.Processors
                         return;
                     }
 
-                    category = fieldTypesRoot.Add("Custom Field Types", folderTemplate);
+                    category = fieldTypesRoot.Add("Custom Field Types", folderTemplate, CategoryItemId);
                     Log.Info("ColorPicker bootstrap: created '" + category.Paths.FullPath + "'.", this);
                 }
 
-                item = category.Add("Color Picker", fieldTypeTemplate);
+                item = category.Add("Color Picker", fieldTypeTemplate, FieldTypeItemId);
                 EnsureFieldValues(item);
 
                 Log.Info("ColorPicker bootstrap: created '" + item.Paths.FullPath + "'.", this);

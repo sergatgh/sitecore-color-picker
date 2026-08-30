@@ -27,6 +27,10 @@ namespace SoftConsulting.ColorPicker.Processors
     /// not surfaced in Sitecore.Kernel public constants — if a path ever changes, update the
     /// constant below (or confirm the actual template ID from Technical Information and switch
     /// to an ID lookup matching the pattern used in <see cref="InitializeColorPickerFieldType"/>).
+    ///
+    /// <see cref="ValidatorFolderId"/> and <see cref="ValidatorItemId"/> are fixed ids this module
+    /// owns for the two items it creates here, generated once and passed explicitly to Item.Add -
+    /// see the equivalent note on <see cref="InitializeColorPickerFieldType"/> for why.
     /// </summary>
     public class InitializeSwatchValidator
     {
@@ -60,6 +64,9 @@ namespace SoftConsulting.ColorPicker.Processors
 
         private const string TypeValue =
             "SoftConsulting.ColorPicker.Validators.SwatchValidator, SoftConsulting.ColorPicker";
+
+        private static readonly ID ValidatorFolderId = new ID("{382DE588-A179-4995-8BC4-9529D08E2DFE}");
+        private static readonly ID ValidatorItemId = new ID("{2B5D2F57-B444-4B05-B5C6-58DE8EC13724}");
 
         public virtual void Process(PipelineArgs args)
         {
@@ -96,7 +103,7 @@ namespace SoftConsulting.ColorPicker.Processors
                     return;
                 }
 
-                item = folder.Add(ValidatorItemName, validationRuleTemplate);
+                item = folder.Add(ValidatorItemName, validationRuleTemplate, ValidatorItemId);
                 EnsureFieldValues(item);
 
                 Log.Info("SwatchValidator bootstrap: created '" + item.Paths.FullPath + "'.", this);
@@ -129,7 +136,7 @@ namespace SoftConsulting.ColorPicker.Processors
                 return null;
             }
 
-            folder = fieldRulesFolder.Add(ValidatorFolderName, new TemplateItem(folderTemplateItem));
+            folder = fieldRulesFolder.Add(ValidatorFolderName, new TemplateItem(folderTemplateItem), ValidatorFolderId);
             Log.Info("SwatchValidator bootstrap: created '" + folder.Paths.FullPath + "'.", this);
 
             return folder;
