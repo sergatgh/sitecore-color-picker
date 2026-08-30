@@ -6,7 +6,10 @@ color picker, or by typing a hex value directly. Transparency editing (an alpha 
 below; by default the field is a plain opaque color picker. When enabled, the field value is
 stored as `#RRGGBB` (opaque) or `#RRGGBBAA` (when alpha is less than fully opaque).
 
-Targets Sitecore XP **10.4.1** (.NET Framework 4.8.1).
+Supports Sitecore XP **9.2–10.4** (.NET Framework **4.7.1**, matching Sitecore 9.2's own minimum
+framework) — compiled against the Sitecore 9.2 API baseline (the module only uses long-stable
+Kernel APIs, plus `Sitecore.DependencyInjection`, which requires Sitecore 8.2 Update-6/9.0+ and is
+fully standard from 9.2 on) and validated on 10.4.1.
 
 ## How it works
 
