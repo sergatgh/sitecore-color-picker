@@ -60,3 +60,10 @@ packages/
 Properties/PublishProfiles/
 .claude/
 *.user
+
+# Sitecore CLI - per-developer endpoint/auth cache (never shared credentials) and the local
+# resolved-plugin package cache; .sitecore/schemas/ (editor intellisense) is still tracked.
+.sitecore/user.json
+.sitecore/.cache/
+.sitecore/package-cache/
+serialization/ColorPicker/serialization/

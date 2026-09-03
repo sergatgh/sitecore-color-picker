@@ -10,18 +10,11 @@ namespace SoftConsulting.ColorPicker.Validators
     using SoftConsulting.ColorPicker.Fields;
 
     /// <summary>
-    /// Field validator that restricts a Color Picker field to only the swatch colors defined
-    /// in the template field's Source - see <see cref="SoftConsulting.ColorPicker.Fields.ColorPickerSourceParser"/>
-    /// for the Source grammar (Palette=..., inline custom color lists, item-based palettes, etc.).
-    ///
-    /// When the field's Source is empty or contains no parseable swatches the validator passes
-    /// without error — no restriction is applied and the author can pick any color. Attach this
-    /// validator to a Color Picker template field only when you want to lock down the palette.
-    ///
-    /// Registration: this class is provisioned as a validator item in the core database at
-    ///   /sitecore/system/Settings/Validation Rules/Field Rules/Color Picker Swatch
-    /// via the <see cref="SoftConsulting.ColorPicker.Processors.InitializeSwatchValidator"/>
-    /// bootstrap processor on application start.
+    /// Field validator that restricts a Color Picker field to only the swatch colors defined in
+    /// the template field's Source - see <see cref="SoftConsulting.ColorPicker.Fields.ColorPickerSourceParser"/>
+    /// for the grammar. When the Source is empty or has no parseable swatches the validator
+    /// passes without error, so attach it only when you want to lock down the palette. Provisioned
+    /// as a validator item via sitecore modules/items/master/items.master.ColorPicker.dat.
     /// </summary>
     [Serializable]
     public class SwatchValidator : StandardValidator

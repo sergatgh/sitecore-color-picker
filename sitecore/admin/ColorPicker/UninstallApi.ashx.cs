@@ -12,20 +12,13 @@ namespace SoftConsulting.ColorPicker.Admin
     using SoftConsulting.ColorPicker.Uninstall;
 
     /// <summary>
-    /// JSON API backing sitecore/admin/ColorPicker/Uninstall.js's wizard. Every action here maps
+    /// JSON API backing sitecore/admin/ColorPicker/Uninstall.js's wizard. Every action maps
     /// straight onto one <see cref="IColorPickerUsageScanner"/>/<see cref="IColorPickerUninstaller"/>
-    /// member - this class only routes, authenticates, and serializes; no business logic of its
-    /// own.
-    ///
-    /// Gated by <see cref="EnsureAdministrator"/>, the same check
-    /// SoftConsulting.ColorPicker.Admin.UninstallPage uses - either entry point alone
-    /// is fully gated. Every state-changing (POST) action additionally requires the per-page-load
-    /// anti-forgery token <see cref="UninstallPage"/> stores in <c>Session</c> and
-    /// hands to the page's JS - see <see cref="ValidateToken"/>. Implements
-    /// <see cref="IRequiresSessionState"/> (a marker interface with no members) because plain
-    /// <see cref="IHttpHandler"/>s don't get <see cref="HttpContext.Session"/> populated by ASP.NET
-    /// otherwise - without it, <see cref="ValidateToken"/> would always see a null session and
-    /// reject every POST.
+    /// member - this class only routes, authenticates, and serializes. Gated by
+    /// <see cref="EnsureAdministrator"/>, and every POST additionally requires the per-page-load
+    /// anti-forgery token the page stores in <c>Session</c> - see <see cref="ValidateToken"/>.
+    /// Implements <see cref="IRequiresSessionState"/> because a plain <see cref="IHttpHandler"/>
+    /// doesn't get <see cref="HttpContext.Session"/> populated otherwise.
     /// </summary>
     public class UninstallApiHandler : IHttpHandler, IRequiresSessionState
     {
@@ -75,8 +68,8 @@ namespace SoftConsulting.ColorPicker.Admin
                 case "scan":
                     WriteJson(context, UsageScanner.Scan());
                     return;
-                case "manifest":
-                    WriteJson(context, Uninstaller.GetRemovalManifest());
+                case "files":
+                    WriteJson(context, Uninstaller.GetManualCleanupFiles());
                     return;
                 case "convertField":
                     {
@@ -108,19 +101,6 @@ namespace SoftConsulting.ColorPicker.Admin
                 case "removeAllPaletteItems":
                     WriteJson(context, Uninstaller.RemoveAllPaletteItems());
                     return;
-                case "removeModule":
-                    {
-                        var result = Uninstaller.RemoveModuleItems();
-                        WriteJson(context, new
-                        {
-                            result.Success,
-                            result.Skipped,
-                            result.Message,
-                            result.DeletedPaths,
-                            ManualCleanupFiles = Uninstaller.GetManualCleanupFiles(),
-                        });
-                        return;
-                    }
                 default:
                     WriteError(context, 400, "Unknown action.");
                     return;

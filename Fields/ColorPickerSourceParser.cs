@@ -16,37 +16,12 @@ namespace SoftConsulting.ColorPicker.Fields
 
     /// <summary>
     /// Parses a Color Picker field's Source value into a merged swatch palette plus an optional
-    /// custom view override.
-    ///
-    /// Grammar - zero or more pipe-separated "Key=Value" segments (keys are case-insensitive):
-    ///
-    ///   Palette=&lt;item path or {ID}&gt; | Palette=&lt;custom color list&gt; | View=&lt;virtual path&gt; | Transparency=true
-    ///
-    /// - "Palette" (repeatable): either the path/ID of an item whose "Colors" field (a "Name
-    ///   Value List" field - see the "Palette" template at
-    ///   /sitecore/templates/Foundation/Color Picker/Palette) holds name/color pairs, or an
-    ///   inline custom color list. Every "Palette" segment's swatches are appended in order, so
-    ///   multiple palettes - item-based, inline, or a mix - merge into one combined list.
-    /// - Custom color list syntax: semicolon-separated "Name:RRGGBB" (or "Name:RRGGBBAA" with
-    ///   an optional alpha suffix) entries, e.g.
-    ///   "[Solid Green]:#11FF11;[Green]:#00FF00;Red:#FF0000;Faded:#0000FF80". ':' divides the
-    ///   name (left) from the color (right). Wrapping the name in square brackets lets it contain ':' itself;
-    ///   without brackets the name must not contain ':' - such an entry is ambiguous and is
-    ///   skipped, same as an entry whose color half does not parse as a hex color.
-    /// - "View": a virtual path to a Razor view that overrides the field control's default
-    ///   rendering view. The last "View" segment wins if more than one is given.
-    /// - "Transparency": "true"/"1" enables the alpha slider and 8-digit hex editing in the
-    ///   default view; anything else (including omitting the key entirely) keeps the field a
-    ///   plain opaque color picker. Defaults to false - transparency editing is opt-in.
-    /// - Any other "Key=Value" segment is treated as one legacy literal swatch
-    ///   ("Name=RRGGBB"), preserving the original Source format this field started with.
-    /// - When the whole Source contains neither '|' nor '=', it is treated as a single Palette
-    ///   value (item path/ID or inline custom color list) - this covers the common case of a
-    ///   bare Source with nothing else configured.
-    ///
-    /// Malformed or unresolvable pieces (a Palette item that doesn't exist, an unparsable color,
-    /// an ambiguous name) are skipped individually rather than failing the whole Source, so one
-    /// bad entry never blanks out the rest of the palette.
+    /// custom view override. Source is pipe-separated "Key=Value" segments: repeatable "Palette"
+    /// entries (an item path/ID, or an inline "Name:RRGGBB;..." list) merge into one swatch
+    /// list, "View" overrides the rendering view, and "Transparency=true" opts into alpha
+    /// editing; a bare Source with neither '|' nor '=' is treated as a single Palette value.
+    /// Malformed or unresolvable pieces (a missing Palette item, an unparsable color, an
+    /// ambiguous name) are skipped individually rather than failing the whole Source.
     /// </summary>
     public class ColorPickerSourceParser : IColorPickerSourceParser
     {
@@ -279,8 +254,7 @@ namespace SoftConsulting.ColorPicker.Fields
 
     /// <summary>
     /// Result of parsing a Color Picker field's Source value: the merged swatch palette and an
-    /// optional custom view virtual path. See <see cref="ColorPickerSourceParser"/> for the
-    /// Source grammar that produces this.
+    /// optional custom view path. See <see cref="ColorPickerSourceParser"/> for the grammar.
     /// </summary>
     public class ColorPickerSourceResult
     {

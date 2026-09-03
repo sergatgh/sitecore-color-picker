@@ -6,13 +6,11 @@ namespace SoftConsulting.ColorPicker.Infrastructure
     using System.Web.Routing;
 
     /// <summary>
-    /// Renders a Razor (.cshtml) view to a string outside of a real MVC request/routing
-    /// pipeline. Used by field controls that run inside the Sitecore Content Editor
-    /// (Sheer/WebForms), where there is no controller action to return a ViewResult from -
-    /// only a real ASP.NET HttpContext (HttpContext.Current), which is what makes faking a
-    /// minimal ControllerContext viable here.
-    ///
-    /// Generic and Sitecore-agnostic - reusable by any other Razor-rendered control.
+    /// Renders a Razor (.cshtml) view to a string outside a real MVC request/routing pipeline.
+    /// Used by field controls running inside the Sitecore Content Editor (Sheer/WebForms), where
+    /// there is no controller action to return a ViewResult from - only a real ASP.NET
+    /// HttpContext, which is enough to fake a minimal ControllerContext. Generic and
+    /// Sitecore-agnostic - reusable by any other Razor-rendered control.
     /// </summary>
     public static class RazorViewRenderer
     {

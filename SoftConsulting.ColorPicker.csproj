@@ -12,7 +12,7 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>SoftConsulting.ColorPicker</RootNamespace>
     <AssemblyName>SoftConsulting.ColorPicker</AssemblyName>
-    <TargetFrameworkVersion>v4.7.1</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
     <UseIISExpress>true</UseIISExpress>
     <Use64BitIISExpress />
     <IISExpressSSLPort />
@@ -43,17 +43,17 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Microsoft.CSharp" />
-    <Reference Include="Microsoft.Extensions.DependencyInjection.Abstractions, Version=2.1.1.0, Culture=neutral, PublicKeyToken=adb9793829ddae60, processorArchitecture=MSIL">
-      <HintPath>packages\Microsoft.Extensions.DependencyInjection.Abstractions.2.1.1\lib\netstandard2.0\Microsoft.Extensions.DependencyInjection.Abstractions.dll</HintPath>
+    <Reference Include="Microsoft.Extensions.DependencyInjection.Abstractions, Version=3.1.5.0, Culture=neutral, PublicKeyToken=adb9793829ddae60, processorArchitecture=MSIL">
+      <HintPath>packages\Microsoft.Extensions.DependencyInjection.Abstractions.3.1.5\lib\netstandard2.0\Microsoft.Extensions.DependencyInjection.Abstractions.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="Microsoft.Win32.Primitives" />
-    <Reference Include="Newtonsoft.Json, Version=13.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
-      <HintPath>packages\Newtonsoft.Json.13.0.1\lib\net45\Newtonsoft.Json.dll</HintPath>
+    <Reference Include="Newtonsoft.Json, Version=11.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
+      <HintPath>packages\Newtonsoft.Json.11.0.2\lib\net45\Newtonsoft.Json.dll</HintPath>
       <Private>False</Private>
     </Reference>
-    <Reference Include="Sitecore.Kernel, Version=13.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>packages\Sitecore.Kernel.9.2.0\lib\net471\Sitecore.Kernel.dll</HintPath>
+    <Reference Include="Sitecore.Kernel, Version=16.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>packages\Sitecore.Kernel.10.1.0\lib\net48\Sitecore.Kernel.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="sysglobl" />
@@ -135,9 +135,6 @@
     <Compile Include="Infrastructure\ColorPickerServicesConfigurator.cs" />
     <Compile Include="Infrastructure\ContentDatabaseResolver.cs" />
     <Compile Include="Infrastructure\RazorViewRenderer.cs" />
-    <Compile Include="Processors\InitializeColorPickerFieldType.cs" />
-    <Compile Include="Processors\InitializeColorPickerPalette.cs" />
-    <Compile Include="Processors\InitializeSwatchValidator.cs" />
     <Compile Include="sitecore\admin\ColorPicker\Uninstall.aspx.cs">
       <SubType>ASPXCodeBehind</SubType>
     </Compile>
@@ -151,14 +148,16 @@
     <None Include="web.config" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="App_Config\Modules\ColorPicker\SoftConsulting.ColorPicker.Initialize.config.disabled" />
+    <Content Include="App_Config\Modules\ColorPicker\SoftConsulting.ColorPicker.Services.config" />
     <Content Include="App_Config\Modules\ColorPicker\SoftConsulting.ColorPicker.Fields.config" />
     <Content Include="sitecore\admin\ColorPicker\Uninstall.aspx" />
     <Content Include="sitecore\admin\ColorPicker\Uninstall.css" />
     <Content Include="sitecore\admin\ColorPicker\Uninstall.js" />
     <Content Include="sitecore\admin\ColorPicker\UninstallApi.ashx" />
     <Content Include="Views\ColorPicker\Field.cshtml" />
-    <Content Include="Views\Web.config" />
+    <None Include="Views\Web.config" />
+    <Content Include="sitecore modules\items\core\items.core.ColorPicker.dat" />
+    <Content Include="sitecore modules\items\master\items.master.ColorPicker.dat" />
   </ItemGroup>
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>

@@ -23,13 +23,10 @@ namespace SoftConsulting.ColorPicker.Fields
             => !string.IsNullOrEmpty(value) && HexPattern.IsMatch(value);
 
         /// <summary>
-        /// Normalizes <paramref name="value"/> to upper-case "#RRGGBB" (opaque) or
-        /// "#RRGGBBAA" (alpha other than fully opaque). An explicit "FF" alpha suffix is
-        /// stripped so a fully-opaque color always normalizes to the 6-digit form, whether it
-        /// was supplied with or without one - this keeps every opaque color, regardless of how
-        /// it was written, comparing equal (e.g. for swatch-selection highlighting and the
-        /// swatch validator's exact-match check). Returns null when <paramref name="value"/> is
-        /// null, empty, or not a valid hex color.
+        /// Normalizes <paramref name="value"/> to upper-case "#RRGGBB" (opaque) or "#RRGGBBAA"
+        /// (alpha other than fully opaque); an explicit "FF" alpha suffix is stripped so every
+        /// opaque color normalizes the same way regardless of how it was written. Returns null
+        /// when <paramref name="value"/> is null, empty, or not a valid hex color.
         /// </summary>
         public static string NormalizeHex(string value)
         {

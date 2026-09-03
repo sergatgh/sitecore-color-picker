@@ -5,18 +5,11 @@ namespace SoftConsulting.ColorPicker.Fields
     using Sitecore.Data.Fields;
 
     /// <summary>
-    /// Data-API wrapper for the "Color Picker" field type. Use this in code to read and write
-    /// color field values on Sitecore items, the same way TextField wraps single-line text.
-    ///
-    /// Values are stored and returned as upper-case "#RRGGBB" (opaque) or "#RRGGBBAA" (when
-    /// alpha is not fully opaque) - see <see cref="A"/>/<see cref="IsOpaque"/>/<see cref="SetFromRgba"/>.
-    /// The implicit cast from Sitecore.Data.Fields.Field follows the same pattern as Sitecore's
-    /// built-in wrappers:
-    ///   ColorPickerField color = item.Fields["Background Color"];
-    ///
-    /// Registered in SoftConsulting.ColorPicker.Fields.config:
-    ///   &lt;fieldType name="Color Picker"
-    ///              type="SoftConsulting.ColorPicker.Fields.ColorPickerField, SoftConsulting.ColorPicker" /&gt;
+    /// Data-API wrapper for the "Color Picker" field type, used to read and write color field
+    /// values on Sitecore items the same way TextField wraps single-line text (e.g.
+    /// <c>ColorPickerField color = item.Fields["Background Color"];</c>). Values are stored and
+    /// returned as upper-case "#RRGGBB" (opaque) or "#RRGGBBAA" (with alpha) - see <see cref="A"/>/
+    /// <see cref="IsOpaque"/>/<see cref="SetFromRgba"/>.
     /// </summary>
     public class ColorPickerField : CustomField
     {
@@ -86,9 +79,8 @@ namespace SoftConsulting.ColorPicker.Fields
 
         /// <summary>
         /// Returns the 32-bit ARGB value (0xAARRGGBB), e.g. a 50%-alpha orange becomes
-        /// 0x80FF5A00. Returned as <see cref="long"/> rather than <see cref="int"/> to avoid
-        /// sign-bit ambiguity once the alpha byte can exceed 0x7F. Returns 0 when
-        /// <see cref="IsEmpty"/>. Unlike <see cref="ToDecimal"/>, this includes alpha.
+        /// 0x80FF5A00. Returned as <see cref="long"/> rather than <see cref="int"/> so the alpha
+        /// byte can exceed 0x7F without sign-bit ambiguity. Returns 0 when <see cref="IsEmpty"/>.
         /// </summary>
         public virtual long ToArgb()
             => IsEmpty ? 0 : ((long)A << 24) | (uint)((R << 16) | (G << 8) | B);
@@ -102,9 +94,8 @@ namespace SoftConsulting.ColorPicker.Fields
 
         /// <summary>
         /// Returns the 24-bit decimal integer (e.g. #FF5A00 → 16734720). RGB-only - alpha is
-        /// not representable through this accessor, so a translucent color's alpha is silently
-        /// dropped here; use <see cref="ToArgb"/> when alpha matters.
-        /// Returns 0 when <see cref="IsEmpty"/>.
+        /// silently dropped, so use <see cref="ToArgb"/> when it matters. Returns 0 when
+        /// <see cref="IsEmpty"/>.
         /// </summary>
         public int ToDecimal()
             => IsEmpty ? 0 : (R << 16) | (G << 8) | B;

@@ -10,22 +10,16 @@ namespace SoftConsulting.ColorPicker.Infrastructure
         Database GetContentDatabase();
 
         /// <summary>
-        /// Every content database this module should provision into / scan for usage - at
-        /// minimum <see cref="GetContentDatabase"/>'s result. See
-        /// <see cref="ContentDatabaseResolver.GetAdditionalContentDatabaseNames"/> for how to
-        /// add more on installs with multiple authoring databases.
+        /// Every content database this module should scan for usage - at minimum
+        /// <see cref="GetContentDatabase"/>'s result.
         /// </summary>
         IEnumerable<Database> GetContentDatabases();
     }
 
     /// <summary>
     /// Resolves the database content editors author in (typically "master"), via the "shell"
-    /// site's contentDatabase setting rather than a hardcoded database name, so bootstrap
-    /// processors keep working on instances that rename or repoint their authoring database.
-    /// Shared by every initialize-pipeline processor in this module that needs to provision
-    /// items in the content database (as opposed to "core"), and by
-    /// <see cref="SoftConsulting.ColorPicker.Uninstall.IColorPickerUsageScanner"/> to know which
-    /// databases to scan for module usage before an uninstall.
+    /// site's contentDatabase setting rather than a hardcoded name, so this keeps working on
+    /// instances that rename or repoint their authoring database.
     /// </summary>
     public class ContentDatabaseResolver : IContentDatabaseResolver
     {
@@ -52,12 +46,9 @@ namespace SoftConsulting.ColorPicker.Infrastructure
         /// <summary>
         /// Deliberately does not default to "every database Sitecore knows about minus core" -
         /// there is no reliable way to tell an authoring database from a publishing target (e.g.
-        /// "web") by name alone, and scanning a publishing target would double-report every
-        /// usage finding as if it came from a second, independent authoring database. Instances
-        /// with more than one real content database (e.g. a second tenant's authoring database)
-        /// should override <see cref="GetAdditionalContentDatabaseNames"/> - via a patch config
-        /// swapping in a subclass, the same extensibility pattern this class itself already
-        /// supports (see SoftConsulting.ColorPicker.Initialize.config's header comment).
+        /// "web") by name alone, and scanning one would double-report usage findings. Instances
+        /// with more than one real content database should override
+        /// <see cref="GetAdditionalContentDatabaseNames"/> via their own subclass.
         /// </summary>
         public virtual IEnumerable<Database> GetContentDatabases()
         {

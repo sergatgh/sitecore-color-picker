@@ -11,16 +11,21 @@
     <div class="cp-page">
         <h1>Uninstall Color Picker</h1>
         <p class="cp-hint">
-            Scans for anything that would make it unsafe to remove the SoftConsulting.ColorPicker
-            module, and removes its Sitecore items once it is safe to do so.
+            Scans for anything that would make it unsafe to stop deploying the
+            SoftConsulting.ColorPicker module. The module's own Sitecore items (the field type,
+            the swatch validator, the Palette template, the sample palettes) aren't deleted here -
+            they're provisioned by two <code>sitecore modules\items\*\*.dat</code> resource files, so
+            deleting those two files (listed in the last step, with a recycle) is the actual
+            removal - see the README's "Uninstalling" section for the one caveat, an item an
+            author has edited and saved.
         </p>
 
         <ol class="cp-steps" id="cp-steps">
             <li data-step="welcome" class="active">Start</li>
-            <li data-step="1">Color Picker fields</li>
+            <li data-step="1">Color fields</li>
             <li data-step="2">Validator references</li>
             <li data-step="3">Custom palettes</li>
-            <li data-step="4">Remove module</li>
+            <li data-step="4">Files to remove</li>
         </ol>
 
         <div id="cp-banner" class="cp-banner" hidden>
@@ -30,22 +35,22 @@
         </div>
 
         <section id="cp-panel-welcome" class="cp-panel active">
-            <p class="cp-hint">Four steps, each with its own scan and fix. Nothing is changed until you act on it.</p>
+            <p class="cp-hint">Four steps - three scans with an optional fix each, then a final list of files to remove by hand. Nothing is changed until you act on it.</p>
             <button type="button" class="cp-btn-wizard" id="cp-start">Start</button>
         </section>
 
         <section id="cp-panel-1" class="cp-panel">
-            <h2>Step 1 - Template fields typed "Color Picker"</h2>
+            <h2>Step 1 - Template fields typed "Color"</h2>
             <p class="cp-hint">
-                Fields still typed <strong>Color Picker</strong> - convert them to Single-Line Text
-                (lossless, since the field only ever stores a plain hex string).
+                Fields still typed <strong>Color</strong> (the Color Picker field type) - convert them
+                to Single-Line Text (lossless, since the field only ever stores a plain hex string).
             </p>
             <div class="cp-panel-actions">
                 <button type="button" class="cp-btn-action" data-action="scan-1">Scan</button>
                 <button type="button" class="cp-btn-action" data-action="convert-all" hidden>Convert all</button>
             </div>
             <div class="cp-table-wrap"><table id="cp-table-1"><tbody></tbody></table></div>
-            <p class="cp-empty" id="cp-empty-1" hidden>None - safe to remove the field type.</p>
+            <p class="cp-empty" id="cp-empty-1" hidden>None - safe to stop pushing the field type.</p>
             <button type="button" class="cp-btn-wizard cp-btn-secondary" data-prev="welcome">Back</button>
             <button type="button" class="cp-btn-wizard" data-next="2">Next</button>
         </section>
@@ -54,10 +59,11 @@
             <h2>Step 2 - Fields using the "Color Picker Swatch" validator</h2>
             <p class="cp-hint">
                 Fields whose Validators list references the <strong>Color Picker Swatch</strong> validator.
-                Informational, not blocking - the validator item is removed in step 4 regardless.
-                Detaching references here just avoids leaving a field with a dangling one. If this
-                looks incomplete, the Link Database may be stale - rebuild it via Control Panel &rarr;
-                Indexing &rarr; Rebuild Link Database, then re-scan.
+                Informational, not blocking. Detaching references here just avoids leaving a field
+                with a dangling one if the validator item is later removed (see the README's
+                "Uninstalling" section). If this looks incomplete, the Link Database may be stale -
+                rebuild it via Control Panel &rarr; Indexing &rarr; Rebuild Link Database, then
+                re-scan.
             </p>
             <div class="cp-panel-actions">
                 <button type="button" class="cp-btn-action" data-action="scan-2">Scan</button>
@@ -72,34 +78,35 @@
         <section id="cp-panel-3" class="cp-panel">
             <h2>Step 3 - Custom Palette items</h2>
             <p class="cp-hint">
-                Items based on the Palette template other than the two seeded samples. Removing
-                them here lets the Palette template be removed too in step 4; leaving any in place
-                keeps the template around so they aren't orphaned.
+                Items based on the Palette template other than the two seeded samples. These
+                aren't part of either <code>sitecore modules\items\*\*.dat</code> file, so deleting those
+                files never touches them - remove them here (per item, or all at once) if you want
+                them gone too.
             </p>
             <div class="cp-panel-actions">
                 <button type="button" class="cp-btn-action" data-action="scan-3">Scan</button>
                 <button type="button" class="cp-btn-action" data-action="remove-all-palettes" hidden>Remove all</button>
             </div>
             <div class="cp-table-wrap"><table id="cp-table-3"><tbody></tbody></table></div>
-            <p class="cp-empty" id="cp-empty-3" hidden>None - safe to remove the Palette template.</p>
+            <p class="cp-empty" id="cp-empty-3" hidden>None found.</p>
             <button type="button" class="cp-btn-wizard cp-btn-secondary" data-prev="2">Back</button>
             <button type="button" class="cp-btn-wizard" data-next="4">Next</button>
         </section>
 
         <section id="cp-panel-4" class="cp-panel">
-            <h2>Step 4 - Remove module</h2>
+            <h2>Step 4 - Files to remove</h2>
             <p class="cp-hint">
-                Preview the module's own Sitecore items below, then remove them. A short list of files
-                still needs to be deleted by hand afterward - they're loaded by this application, so removal
-                can't touch them - and that list appears once removal finishes.
+                These files are loaded by this application and can't delete themselves - delete
+                them by hand, then recycle the application pool. The two
+                <code>sitecore modules\items\*\*.dat</code> files in this list are the module's own
+                Sitecore items - deleting them <em>is</em> the removal, not just cleanup (see the
+                note above for the one caveat, an item an author has edited and saved).
             </p>
             <div class="cp-panel-actions">
-                <button type="button" class="cp-btn-action" data-action="scan-4">Preview</button>
+                <button type="button" class="cp-btn-action" data-action="scan-4">Show files</button>
             </div>
-            <div id="cp-manifest"></div>
+            <div id="cp-files"></div>
             <button type="button" class="cp-btn-wizard cp-btn-secondary" data-prev="3">Back</button>
-            <button type="button" class="cp-btn-wizard cp-btn-danger" id="cp-remove">Remove module</button>
-            <div id="cp-final"></div>
         </section>
     </div>
 

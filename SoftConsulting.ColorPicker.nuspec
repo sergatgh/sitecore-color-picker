@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
   Packs the built SoftConsulting.ColorPicker.dll plus the module's non-compiled assets (App_Config
-  include, Razor view, uninstall admin page) as NuGet "content" files, so `nuget install` /
+  include, Razor view, uninstall admin page, Items-as-Resources .dat files) as NuGet "content"
+  files, so `nuget install` /
   `Install-Package` (classic packages.config-style, matching this project's own consumption model)
   drops them into a consumer's Sitecore web application project at the same relative paths used
   here, and wires them into the consumer's .csproj automatically.
@@ -23,50 +24,33 @@
     <description>
       A custom Sitecore Content Editor field that lets an author pick a color via a native browser
       color picker or by typing a hex value directly, with optional swatch palettes and optional
-      transparency (8-digit #RRGGBBAA) support. Provisions itself idempotently on application
-      start - no package install or serialization push required. Supports Sitecore XP 9.2-10.4.
+      transparency (8-digit #RRGGBBAA) support. Ships its own Sitecore items as Items-as-Resources
+      .dat files, auto-installed by Sitecore on application start - no CLI step, no package
+      install. Supports Sitecore XP 10.1+ (Items as Resources requires 10.1+).
     </description>
-    <releaseNotes>See https://github.com/ (TODO: project URL) for release notes.</releaseNotes>
     <tags>sitecore sitecore-module content-editor field color-picker</tags>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <readme>docs\README.md</readme>
-    <!-- Deliberately no <dependencies> here. Every assembly this DLL is compiled against
-         (Sitecore.Kernel, the MVC/Razor/WebPages stack, DI abstractions, Newtonsoft.Json,
-         System.ValueTuple - see the .csproj) already ships as part of any real Sitecore
-         9.2-10.4 site. Declaring them as NuGet dependencies would make `Install-Package`
-         add them as Copy-Local references in the consumer's project, dropping our pinned
-         (e.g. Sitecore.Kernel 9.2.0) build into their bin/wwwroot on top of - and for
-         unsigned assemblies like Sitecore.Kernel, silently overriding - whatever newer
-         version (e.g. 10.4) their own Sitecore install already put there. They're
-         documented as prerequisites in the README instead; see NUGET_README.md. -->
   </metadata>
   <files>
-    <!-- Shown as the package description on nuget.org / in the Package Manager UI. -->
     <file src="NUGET_README.md" target="docs\README.md" />
 
-    <!-- Compiled assembly - added as a Reference. net471 matches both this project's own
-         TargetFrameworkVersion and the Sitecore 9.2 API baseline it's compiled against. -->
-    <file src="bin\SoftConsulting.ColorPicker.dll" target="lib\net471\SoftConsulting.ColorPicker.dll" />
+    <file src="bin\SoftConsulting.ColorPicker.dll" target="lib\net48\SoftConsulting.ColorPicker.dll" />
 
-    <!-- Bootstrap config - ships disabled (see the file's own header comment); the consumer
-         renames it to drop the ".disabled" suffix once they're ready for it to provision items
-         on application start. -->
-    <file src="App_Config\Modules\ColorPicker\SoftConsulting.ColorPicker.Initialize.config.disabled"
-          target="content\App_Config\Modules\ColorPicker\SoftConsulting.ColorPicker.Initialize.config.disabled" />
+    <file src="App_Config\Modules\ColorPicker\SoftConsulting.ColorPicker.Services.config"
+          target="content\App_Config\Modules\ColorPicker\SoftConsulting.ColorPicker.Services.config" />
     <file src="App_Config\Modules\ColorPicker\SoftConsulting.ColorPicker.Fields.config"
           target="content\App_Config\Modules\ColorPicker\SoftConsulting.ColorPicker.Fields.config" />
 
-    <!-- Razor view. Web.config is deliberately placed at content\Views\ColorPicker\Web.config
-         (nested under the module's own view folder), not content\Views\Web.config, so installing
-         this package never overwrites/conflicts with a consumer site's own top-level Views\Web.config
-         if one already exists (e.g. from an MVC-enabled Sitecore install) - the razor
-         host/pageBaseType config it carries applies to any folder at or below where it lives. -->
-    <file src="Views\ColorPicker\Field.cshtml" target="content\Views\ColorPicker\Field.cshtml" />
-    <file src="Views\Web.config" target="content\Views\ColorPicker\Web.config" />
+    <file src="sitecore modules\items\core\items.core.ColorPicker.dat"
+          target="content\sitecore modules\items\core\items.core.ColorPicker.dat" />
+    <file src="sitecore modules\items\master\items.master.ColorPicker.dat"
+          target="content\sitecore modules\items\master\items.master.ColorPicker.dat" />
 
-    <!-- Uninstall admin page. Only the .aspx/.ashx markup ships - Inherits/Class point at types
-         already compiled into SoftConsulting.ColorPicker.dll (no CodeBehind/CodeFile attribute),
-         so the .cs files behind them are not needed here. -->
+    <file src="serialization\ColorPicker\**\*.*" target="content\serialization\ColorPicker" />
+
+    <file src="Views\ColorPicker\Field.cshtml" target="content\Views\ColorPicker\Field.cshtml" />
+
     <file src="sitecore\admin\ColorPicker\Uninstall.aspx" target="content\sitecore\admin\ColorPicker\Uninstall.aspx" />
     <file src="sitecore\admin\ColorPicker\Uninstall.css" target="content\sitecore\admin\ColorPicker\Uninstall.css" />
     <file src="sitecore\admin\ColorPicker\Uninstall.js" target="content\sitecore\admin\ColorPicker\Uninstall.js" />

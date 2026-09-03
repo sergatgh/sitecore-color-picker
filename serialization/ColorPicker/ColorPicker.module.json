@@ -1,0 +1,62 @@
+{
+  "namespace": "SoftConsulting.ColorPicker",
+  "description": "The Color Picker field type, Palette template, swatch validator, and sample palettes this module provisions. Every include is scoped SingleItem (never deletes siblings an author or another module owns) except PaletteTemplate, scoped ItemAndDescendants since the Palette template's Data section/Colors field belong to this module outright. See the README's 'Deploying'/'Uninstalling' sections.",
+  "items": {
+    "includes": [
+      {
+        "name": "FieldType",
+        "path": "/sitecore/system/Field types/Color Picker",
+        "scope": "ItemAndDescendants",
+        "database": "core"
+      },
+      {
+        "name": "TemplatesModuleFolder",
+        "path": "/sitecore/templates/Foundation/Color Picker",
+        "scope": "SingleItem",
+        "database": "master"
+      },
+      {
+        "name": "PaletteTemplate",
+        "path": "/sitecore/templates/Foundation/Color Picker/Palette",
+        "scope": "ItemAndDescendants",
+        "database": "master"
+      },
+      {
+        "name": "ModuleFolder",
+        "path": "/sitecore/system/Modules/Color Picker",
+        "scope": "SingleItem",
+        "database": "master"
+      },
+      {
+        "name": "PalettesFolder",
+        "path": "/sitecore/system/Modules/Color Picker/Palettes",
+        "scope": "SingleItem",
+        "database": "master"
+      },
+      {
+        "name": "MaterialDesignPalette",
+        "path": "/sitecore/system/Modules/Color Picker/Palettes/Material Design",
+        "scope": "SingleItem",
+        "database": "master"
+      },
+      {
+        "name": "FlatUiColorsPalette",
+        "path": "/sitecore/system/Modules/Color Picker/Palettes/Flat UI Colors",
+        "scope": "SingleItem",
+        "database": "master"
+      },
+      {
+        "name": "SwatchValidatorFolder",
+        "path": "/sitecore/system/Settings/Validation Rules/Field Rules/Color Picker",
+        "scope": "SingleItem",
+        "database": "master"
+      },
+      {
+        "name": "SwatchValidator",
+        "path": "/sitecore/system/Settings/Validation Rules/Field Rules/Color Picker/Color Picker Swatch",
+        "scope": "SingleItem",
+        "database": "master"
+      }
+    ]
+  }
+}

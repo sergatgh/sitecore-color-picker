@@ -11,48 +11,21 @@ namespace SoftConsulting.ColorPicker.Fields
 
     /// <summary>
     /// Content Editor field that lets an author pick a color from a configurable swatch
-    /// palette, a native browser color picker, or by typing a hex value directly. The field
-    /// value is always stored normalized as "#RRGGBB" (opaque) or "#RRGGBBAA" (when alpha is
-    /// set to less than fully opaque).
-    ///
-    /// The palette (and an optional custom rendering view) is driven by the field's Source
-    /// value - see <see cref="ColorPickerSourceParser"/> for the full grammar. In short, Source
-    /// is zero or more pipe-separated "Key=Value" segments:
-    ///
-    ///   Palette=/sitecore/settings/color-picker/palette1|Palette=[Solid Green]:#11FF11;Red:#FF0000|View=/Views/Shared/MyColor.cshtml|Transparency=true
-    ///
-    /// "Palette" is repeatable and merges (an item path/ID whose "Colors" field holds a custom
-    /// color list, or an inline custom color list); "View" overrides <see cref="DefaultVirtualPath"/>.
-    /// "Transparency=true" opts into the alpha slider and 8-digit hex editing in the default
-    /// view; omitted (or any other value) keeps the field a plain opaque color picker.
-    ///
-    /// Derives from the same base (Sitecore.Shell.Applications.ContentEditor.Text) as built-in
-    /// simple-text-style fields, and is registered with an explicit controlSources "prefix" -
-    /// the field's Control value must be "prefix:ClassName" (case-sensitive), not a bare custom
-    /// tag, for Sitecore's Sheer/XML control resolver to find it.
-    ///
-    /// The markup, all presentation logic (css class / border style per swatch) and the inline
-    /// onclick/onchange script-building (formerly BuildSyncScript/BuildHexChangeScript here)
-    /// all live in Views\ColorPicker\Field.cshtml now - this class only gathers raw data
-    /// (ColorPickerViewModel) and hands it to SoftConsulting.ColorPicker.Infrastructure.
-    /// RazorViewRenderer, which renders that view to a string (DoRender below runs inside the
-    /// Sitecore Content Editor's Sheer/WebForms pipeline, not a real MVC request, so there is no
-    /// controller action to return a view from - RazorViewRenderer fakes a minimal
-    /// ControllerContext from the real HttpContext.Current instead). All interaction handlers
-    /// are still inlined directly on each element in that view (no shared &lt;script&gt; block)
-    /// because the Content Editor frequently injects field markup via innerHTML-style updates,
-    /// and browsers never execute &lt;script&gt; tags inserted that way - a shared,
-    /// separately-declared function would silently never run.
+    /// palette, a native browser color picker, or a typed hex value; the stored value is always
+    /// normalized to "#RRGGBB" (opaque) or "#RRGGBBAA" (with alpha). The palette and an optional
+    /// custom view are driven by the field's Source value - see <see cref="ColorPickerSourceParser"/>
+    /// for the grammar. All markup and script live in Views\ColorPicker\Field.cshtml, rendered
+    /// via <see cref="SoftConsulting.ColorPicker.Infrastructure.RazorViewRenderer"/>; this class
+    /// only builds the <see cref="ColorPickerViewModel"/> handed to it.
     /// </summary>
     public class ColorPicker : Text
     {
         protected virtual string DefaultVirtualPath => "~/Views/ColorPicker/Field.cshtml";
 
         /// <summary>
-        /// Gets or sets the Source value configured on the template field - see
-        /// <see cref="ColorPickerSourceParser"/> for the grammar. Mirrors the same pattern used
-        /// by built-in Content Editor field controls such as Custom.Source / File.Source /
-        /// Icon.Source.
+        /// The Source value configured on the template field - see
+        /// <see cref="ColorPickerSourceParser"/> for the grammar. Mirrors the pattern used by
+        /// built-in field controls such as Custom.Source / File.Source / Icon.Source.
         /// </summary>
         public string Source
         {
@@ -97,10 +70,9 @@ namespace SoftConsulting.ColorPicker.Fields
             => ServiceLocator.ServiceProvider.GetService<IColorPickerSourceParser>() ?? new ColorPickerSourceParser();
 
         /// <summary>
-        /// Builds the data handed to the rendering view - the actual Sitecore field value
-        /// travels back to the server through the rendered hidden input, whose id/name must
-        /// match this.ID so the standard Sitecore postback handling (LoadPostData below) picks
-        /// it up like any other field.
+        /// Builds the data handed to the rendering view. The rendered hidden input's id/name
+        /// must match this.ID so <see cref="LoadPostData"/> picks the value up like any other
+        /// field.
         /// </summary>
         protected virtual ColorPickerViewModel BuildViewModel(ColorPickerSourceResult parsedSource)
         {

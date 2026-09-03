@@ -3,7 +3,6 @@ namespace SoftConsulting.ColorPicker.Uninstall
     using System;
     using System.Collections.Generic;
     using System.IO;
-    using System.Linq;
     using System.Reflection;
     using System.Web.Hosting;
     using Sitecore.Configuration;
@@ -26,52 +25,24 @@ namespace SoftConsulting.ColorPicker.Uninstall
 
         ColorPickerBulkActionResult RemoveAllPaletteItems();
 
-        ColorPickerRemovalManifest GetRemovalManifest();
-
-        ColorPickerRemovalResult RemoveModuleItems();
-
         /// <summary>
         /// The module's files, left for manual cleanup by deliberate choice rather than because
-        /// deletion is impossible for all of them - see the class remarks. Computed at runtime,
-        /// never hardcoded, so the list can never drift from what is actually deployed.
+        /// deletion is impossible for all of them - see the class remarks. Computed at runtime
+        /// so the list never drifts from what is actually deployed.
         /// </summary>
         IReadOnlyList<string> GetManualCleanupFiles();
     }
 
     /// <summary>
     /// Acts on <see cref="IColorPickerUsageScanner"/>'s findings: converts Color Picker-typed
-    /// fields, detaches swatch-validator references, deletes custom Palette items, and finally
-    /// removes everything SoftConsulting.ColorPicker.Processors.Initialize*.cs provisions -
-    /// mirroring each processor's own path constants bottom-up (delete the leaf item, then
-    /// delete its parent folder only if that folder is now empty - the inverse of the
-    /// processors' top-down "create if missing").
-    ///
-    /// Every "all" method - <see cref="ConvertAllFieldsToSingleLineText"/>,
-    /// <see cref="RemoveAllValidatorReferences"/>, <see cref="RemoveAllPaletteItems"/>,
-    /// <see cref="RemoveModuleItems"/> - re-scans via <see cref="IColorPickerUsageScanner"/>
-    /// itself before acting rather than trusting a caller to have scanned first, so this class
-    /// stays safe to call directly (e.g. from Tools/Remove-ColorPickerModule.ps1) without going
-    /// through the admin page's wizard steps in order.
-    ///
-    /// Only the DLL this class ships in (and its PDB) is actually locked by code running inside
-    /// this same w3wp process - the CLR holds a loaded assembly open for the AppDomain's life.
-    /// The module's App_Config/Views/admin-page files are not held open the same way and could
-    /// technically be deleted here too, but <see cref="GetManualCleanupFiles"/> leaves all of it
-    /// - DLL included - for manual cleanup by deliberate choice, not because deletion is
-    /// impossible for all of them:
-    /// <list type="bullet">
-    /// <item><description>Self-modification mid-request risk - this code can run from the very
-    /// admin page/API handler it would be deleting, or from a config file Sitecore's Include
-    /// watcher reads on the next request.</description></item>
-    /// <item><description>One consistent mental model for whoever runs this: Sitecore items are
-    /// automated, the filesystem is manual, then recycle the pool - not a partial list where some
-    /// files vanish automatically and others don't.</description></item>
-    /// <item><description>Deployment/source-control drift - these files are normally checked in
-    /// and pushed through a deploy pipeline; deleting them from a live server bypasses that, and
-    /// the next deployment could silently resurrect them.</description></item>
-    /// <item><description>Attack surface - keeping delete-by-path capability out of this class
-    /// entirely avoids path-traversal/confused-deputy risk in an admin-gated handler.</description></item>
-    /// </list>
+    /// fields, detaches swatch-validator references, and deletes custom Palette items - the
+    /// three things that would make it unsafe to stop deploying this module's own Sitecore items.
+    /// The module's own items (field type, validator, Palette template, sample palettes) and its
+    /// deployed files are deliberately left for manual cleanup rather than deleted here - see
+    /// <see cref="GetManualCleanupFiles"/> and the README's "Uninstalling" section for why. Every
+    /// "all" method re-scans via <see cref="IColorPickerUsageScanner"/> before acting rather than
+    /// trusting a caller to have scanned first, so it stays safe to call directly (e.g. from
+    /// Tools/Remove-ColorPickerModule.ps1) without going through the admin page's wizard in order.
     /// </summary>
     public class ColorPickerUninstaller : IColorPickerUninstaller
     {
@@ -86,25 +57,11 @@ namespace SoftConsulting.ColorPicker.Uninstall
 
         private const string SingleLineTextFieldType = "Single-Line Text";
 
-        // Mirrors InitializeColorPickerFieldType.cs (core database).
-        private const string FieldTypesCategoryPath = "/sitecore/system/Field types/Custom Field Types";
-        private const string FieldTypeItemPath = FieldTypesCategoryPath + "/Color Picker";
-
-        // Mirrors InitializeSwatchValidator.cs (content database).
-        private const string FieldRulesFolderPath = "/sitecore/system/Settings/Validation Rules/Field Rules";
-        private const string ValidatorFolderPath = FieldRulesFolderPath + "/Color Picker";
-        private const string ValidatorItemPath = ValidatorFolderPath + "/Color Picker Swatch";
-
-        // Mirrors InitializeColorPickerPalette.cs (content database).
-        private const string TemplatesFoundationFolderPath = "/sitecore/templates/Foundation";
-        private const string TemplatesModuleFolderPath = TemplatesFoundationFolderPath + "/Color Picker";
-        private const string PaletteTemplatePath = TemplatesModuleFolderPath + "/Palette";
-        private const string DataSectionPath = PaletteTemplatePath + "/Data";
-        private const string ColorsFieldPath = DataSectionPath + "/Colors";
-        private const string ModulesFolderPath = "/sitecore/system/Modules";
-        private const string ColorPickerModuleFolderPath = ModulesFolderPath + "/Color Picker";
-        private const string PaletteModuleFolderPath = ColorPickerModuleFolderPath + "/Palettes";
-        private static readonly string[] SeedPaletteNames = { "Material Design", "Flat UI Colors" };
+        // Mirrors the "SwatchValidator" include in serialization/ColorPicker/ColorPicker.module.json
+        // (content database) - needed here only to look up the validator item's id so
+        // RemoveValidatorReference knows which token to strip from a field's Validators list.
+        private const string ValidatorItemPath =
+            "/sitecore/system/Settings/Validation Rules/Field Rules/Color Picker/Color Picker Swatch";
 
         protected virtual IContentDatabaseResolver ContentDatabaseResolver => this.contentDatabaseResolver;
 
@@ -286,68 +243,7 @@ namespace SoftConsulting.ColorPicker.Uninstall
             return new ColorPickerBulkActionResult { Success = failures.Count == 0, Count = count, Failures = failures };
         }
 
-        // ---- Step 4: preview and final removal -------------------------------------------------
-
-        public virtual ColorPickerRemovalManifest GetRemovalManifest()
-        {
-            var core = Factory.GetDatabase("core", false);
-            var database = ContentDatabaseResolver.GetContentDatabase();
-
-            var items = new List<string>();
-            AddIfExists(core, FieldTypeItemPath, items);
-            AddIfExists(database, ValidatorItemPath, items);
-
-            foreach (var name in SeedPaletteNames)
-            {
-                AddIfExists(database, PaletteModuleFolderPath + "/" + name, items);
-            }
-
-            var hasCustomPalettes = UsageScanner.Scan().HasCustomPalettes;
-            string reason = null;
-
-            if (!hasCustomPalettes)
-            {
-                AddIfExists(database, ColorsFieldPath, items);
-                AddIfExists(database, PaletteTemplatePath, items);
-            }
-            else
-            {
-                reason = "Custom Palette items still exist - remove them (step 3) first, or the Palette template is kept so they are not orphaned.";
-            }
-
-            return new ColorPickerRemovalManifest
-            {
-                ItemPathsToRemove = items,
-                WillKeepPaletteTemplate = hasCustomPalettes,
-                KeepPaletteTemplateReason = reason,
-                ManualCleanupFiles = GetManualCleanupFiles(),
-            };
-        }
-
-        public virtual ColorPickerRemovalResult RemoveModuleItems()
-        {
-            var fieldTypeResult = RemoveFieldType();
-            var validatorResult = RemoveSwatchValidator();
-            var palettesResult = RemovePalettes(deleteCustomPalettes: false);
-            var paletteTemplateResult = RemovePaletteTemplate();
-
-            var deleted = new List<string>();
-            deleted.AddRange(fieldTypeResult.DeletedPaths);
-            deleted.AddRange(validatorResult.DeletedPaths);
-            deleted.AddRange(palettesResult.DeletedPaths);
-            deleted.AddRange(paletteTemplateResult.DeletedPaths);
-
-            // paletteTemplateResult may legitimately be "skipped" (custom palettes left in
-            // place by choice) without that making the overall removal a failure - the other
-            // three steps are what removing the module's own items actually depends on.
-            var success = fieldTypeResult.Success && validatorResult.Success && palettesResult.Success;
-
-            var message = string.Join(" ", new[] { fieldTypeResult, validatorResult, palettesResult, paletteTemplateResult }
-                .Where(r => !r.Success)
-                .Select(r => r.Message));
-
-            return ColorPickerRemovalResult.CombinedResult(success, deleted, message.Length == 0 ? null : message);
-        }
+        // ---- Step 4: files to remove by hand ----------------------------------------------------
 
         public virtual IReadOnlyList<string> GetManualCleanupFiles()
         {
@@ -367,160 +263,19 @@ namespace SoftConsulting.ColorPicker.Uninstall
             AddMappedPathIfExists(files, "~/Views/ColorPicker");
             AddMappedPathIfExists(files, "~/sitecore/admin/ColorPicker");
 
+            // Unlike everything above, deleting these two is what actually removes the module's
+            // own Sitecore items (the field type, the Palette template, the swatch validator, the
+            // sample palettes) - Sitecore's "Items as Resources" feature auto-loads any .dat file
+            // under sitecore modules/items/<database>/ on startup, so deleting the file and recycling the
+            // pool is the removal, the same as everything else on this list; nothing here calls
+            // the Sitecore Data API to delete an item directly. Any item an author has since
+            // edited and saved was copied into the real content database as an override at that
+            // point, so it survives this - see the README's "Uninstalling" section for
+            // `itemres cleanup`, which also removes those overrides.
+            AddMappedPathIfExists(files, "~/sitecore modules/items/core/items.core.ColorPicker.dat");
+            AddMappedPathIfExists(files, "~/sitecore modules/items/master/items.master.ColorPicker.dat");
+
             return files;
-        }
-
-        // ---- Bottom-up removal, mirroring the Initialize*.cs processors' path constants -------
-
-        // Refuses to proceed while any field is still typed "Color Picker" - deleting the field
-        // type out from under them would leave those fields unable to resolve their editor.
-        protected virtual ColorPickerRemovalResult RemoveFieldType()
-        {
-            if (UsageScanner.Scan().HasColorPickerTypedFields)
-            {
-                return ColorPickerRemovalResult.SkippedResult(
-                    "Skipped: one or more template fields are still typed \"Color Picker\" - convert them first.");
-            }
-
-            using (new SecurityDisabler())
-            {
-                var core = Factory.GetDatabase("core", false);
-                if (core == null)
-                {
-                    return ColorPickerRemovalResult.SkippedResult("Skipped: 'core' database not found.");
-                }
-
-                var deleted = new List<string>();
-                DeleteItemIfExists(core, FieldTypeItemPath, deleted);
-                DeleteFolderIfEmpty(core, FieldTypesCategoryPath, deleted);
-
-                return ColorPickerRemovalResult.SuccessResult(deleted);
-            }
-        }
-
-        protected virtual ColorPickerRemovalResult RemoveSwatchValidator()
-        {
-            using (new SecurityDisabler())
-            {
-                var database = ContentDatabaseResolver.GetContentDatabase();
-                if (database == null)
-                {
-                    return ColorPickerRemovalResult.SkippedResult("Skipped: content database not found.");
-                }
-
-                var deleted = new List<string>();
-                DeleteItemIfExists(database, ValidatorItemPath, deleted);
-                DeleteFolderIfEmpty(database, ValidatorFolderPath, deleted);
-
-                return ColorPickerRemovalResult.SuccessResult(deleted);
-            }
-        }
-
-        protected virtual ColorPickerRemovalResult RemovePalettes(bool deleteCustomPalettes)
-        {
-            using (new SecurityDisabler())
-            {
-                var database = ContentDatabaseResolver.GetContentDatabase();
-                if (database == null)
-                {
-                    return ColorPickerRemovalResult.SkippedResult("Skipped: content database not found.");
-                }
-
-                var deleted = new List<string>();
-
-                foreach (var name in SeedPaletteNames)
-                {
-                    DeleteItemIfExists(database, PaletteModuleFolderPath + "/" + name, deleted);
-                }
-
-                if (deleteCustomPalettes)
-                {
-                    foreach (var palette in UsageScanner.Scan().CustomPalettes)
-                    {
-                        var result = RemovePaletteItem(palette.DatabaseName, palette.ItemId.ToString());
-                        if (result.Success)
-                        {
-                            deleted.Add(palette.ItemPath);
-                        }
-                    }
-                }
-
-                DeleteFolderIfEmpty(database, PaletteModuleFolderPath, deleted);
-                DeleteFolderIfEmpty(database, ColorPickerModuleFolderPath, deleted);
-
-                return ColorPickerRemovalResult.SuccessResult(deleted);
-            }
-        }
-
-        // Skipped (not a failure) whenever custom Palette items still exist - removing the
-        // template out from under them would orphan them. The admin (or the caller) decides
-        // whether to clear those first via RemovePaletteItem/RemoveAllPaletteItems.
-        protected virtual ColorPickerRemovalResult RemovePaletteTemplate()
-        {
-            if (UsageScanner.Scan().HasCustomPalettes)
-            {
-                return ColorPickerRemovalResult.SkippedResult(
-                    "Skipped: custom Palette items still exist - removing the template now would orphan them.");
-            }
-
-            using (new SecurityDisabler())
-            {
-                var database = ContentDatabaseResolver.GetContentDatabase();
-                if (database == null)
-                {
-                    return ColorPickerRemovalResult.SkippedResult("Skipped: content database not found.");
-                }
-
-                var deleted = new List<string>();
-                DeleteItemIfExists(database, ColorsFieldPath, deleted);
-                DeleteFolderIfEmpty(database, DataSectionPath, deleted);
-                DeleteItemIfExists(database, PaletteTemplatePath, deleted);
-                DeleteFolderIfEmpty(database, TemplatesModuleFolderPath, deleted);
-                DeleteFolderIfEmpty(database, TemplatesFoundationFolderPath, deleted);
-
-                return ColorPickerRemovalResult.SuccessResult(deleted);
-            }
-        }
-
-        // Idempotent leaf delete: returns quietly (no error) when the item is already gone, the
-        // same "already handled" branch every Initialize*.cs processor's EnsureItem takes on the
-        // creation side.
-        protected virtual bool DeleteItemIfExists(Database database, string path, List<string> deleted)
-        {
-            var item = database.GetItem(path);
-            if (item == null)
-            {
-                return false;
-            }
-
-            item.Delete();
-            deleted.Add(path);
-            return true;
-        }
-
-        // "Not empty" (something else now lives under this folder - e.g. an author's own
-        // template, or a sibling this module never created) is not an error - the folder is
-        // simply left in place, same as InitializeColorPickerPalette.cs leaves "Foundation"
-        // alone whenever other Foundation templates already exist.
-        protected virtual bool DeleteFolderIfEmpty(Database database, string path, List<string> deleted)
-        {
-            var item = database.GetItem(path);
-            if (item == null || item.HasChildren)
-            {
-                return false;
-            }
-
-            item.Delete();
-            deleted.Add(path);
-            return true;
-        }
-
-        protected virtual void AddIfExists(Database database, string path, List<string> items)
-        {
-            if (database?.GetItem(path) != null)
-            {
-                items.Add(path);
-            }
         }
 
         protected virtual void UpdateFieldType(Item templateFieldItem, string newTypeValue)
@@ -565,32 +320,6 @@ namespace SoftConsulting.ColorPicker.Uninstall
         }
     }
 
-    public class ColorPickerRemovalResult
-    {
-        public bool Success { get; private set; }
-
-        public bool Skipped { get; private set; }
-
-        public string Message { get; private set; }
-
-        public IReadOnlyList<string> DeletedPaths { get; private set; } = new List<string>();
-
-        public static ColorPickerRemovalResult SuccessResult(IReadOnlyList<string> deletedPaths)
-            => new ColorPickerRemovalResult { Success = true, DeletedPaths = deletedPaths ?? new List<string>() };
-
-        public static ColorPickerRemovalResult SkippedResult(string message)
-            => new ColorPickerRemovalResult { Success = false, Skipped = true, Message = message };
-
-        public static ColorPickerRemovalResult CombinedResult(bool success, IReadOnlyList<string> deletedPaths, string message)
-            => new ColorPickerRemovalResult
-            {
-                Success = success,
-                Skipped = !success,
-                DeletedPaths = deletedPaths ?? new List<string>(),
-                Message = message,
-            };
-    }
-
     public class ColorPickerActionResult
     {
         public bool Success { get; private set; }
@@ -609,26 +338,5 @@ namespace SoftConsulting.ColorPicker.Uninstall
         public int Count { get; set; }
 
         public IReadOnlyList<string> Failures { get; set; } = new List<string>();
-    }
-
-    /// <summary>
-    /// Preview for step 4: what will happen if <see cref="IColorPickerUninstaller.RemoveModuleItems"/>
-    /// is run right now.
-    /// </summary>
-    public class ColorPickerRemovalManifest
-    {
-        /// <summary>
-        /// Items that will unconditionally be deleted. Does not attempt to predict which
-        /// now-empty parent folders will also be removed, to avoid a second simulation path that
-        /// could drift from what <see cref="IColorPickerUninstaller.RemoveModuleItems"/> actually
-        /// does - the removal result afterward shows the real, complete list.
-        /// </summary>
-        public IReadOnlyList<string> ItemPathsToRemove { get; set; } = new List<string>();
-
-        public bool WillKeepPaletteTemplate { get; set; }
-
-        public string KeepPaletteTemplateReason { get; set; }
-
-        public IReadOnlyList<string> ManualCleanupFiles { get; set; } = new List<string>();
     }
 }

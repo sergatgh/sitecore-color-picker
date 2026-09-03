@@ -1,37 +1,20 @@
 @model SoftConsulting.ColorPicker.Fields.ColorPickerViewModel
 @*
-    Renders the Color Picker field's markup. All interaction handlers are inlined directly on
-    each element (no shared <script> block) because the Content Editor frequently injects field
-    markup via innerHTML-style updates, and browsers never execute <script> tags inserted that
-    way - a shared, separately-declared function would silently never run. Do not add one here.
-
-    The script text built by BuildSyncScript/BuildHexChangeScript/BuildAlphaInputScript below is
-    written via Html.Raw - it is JS source going into onclick/onchange/oninput attributes and
-    must not be HTML-entity-encoded, unlike every other value below which relies on Razor's
-    automatic encoding of "@expression" output.
-
-    Colors are stored as "#RRGGBB" (opaque) or "#RRGGBBAA" (alpha other than fully opaque) - see
-    SoftConsulting.ColorPicker.Fields.ColorPickerUtils.NormalizeHex. Because each interaction
-    handler below is self-contained inline JS (per the constraint above), the small amount of
-    hex/alpha composition logic in BuildSyncScript is duplicated into every onclick/onchange/
-    oninput attribute that calls it, rather than shared - that duplication is intentional here,
-    not an oversight.
-
-    Transparency editing (the alpha slider, 8-digit hex entry) is opt-in via the field's Source
-    ("Transparency=true" - see ColorPickerSourceParser). When Model.AllowTransparency is false,
-    the alpha slider is not rendered at all, and every call site below passes the literal "255"
-    as BuildSyncScript's alphaExpression instead of reading a stored/slider alpha value, which
-    keeps the field editing strictly opaque colors regardless of what a palette swatch's Hex
-    happens to contain.
+    Renders the Color Picker field's markup. Interaction handlers are inlined on each element
+    (no shared <script> block) because the Content Editor injects field markup via innerHTML,
+    which never executes a <script> tag added that way - do not add one here. The script text
+    built by BuildSyncScript/BuildHexChangeScript/BuildAlphaInputScript is written via Html.Raw
+    as raw JS, unlike every other value below which relies on Razor's automatic encoding. Colors
+    are stored as "#RRGGBB"/"#RRGGBBAA" (see ColorPickerUtils.NormalizeHex), and transparency
+    editing (alpha slider, 8-digit hex) is opt-in via the field's Source ("Transparency=true").
 *@
 @functions
 {
     /// <summary>
-    /// Builds a self-contained inline script that combines an RGB hex expression and an alpha
-    /// (0-255) expression into the final "#RRGGBB"/"#RRGGBBAA" value, writes it into the hidden
-    /// field, the native color input (RGB portion only - it cannot represent alpha), the hex
-    /// textbox and the alpha slider, refreshes the live preview swatch, then notifies the
-    /// Content Editor that the form was modified.
+    /// Builds inline script that combines an RGB hex expression and an alpha (0-255) expression
+    /// into the final "#RRGGBB"/"#RRGGBBAA" value, writes it to the hidden field, native color
+    /// input, hex textbox and alpha slider, refreshes the preview swatch, then flags the Content
+    /// Editor form as modified.
     /// </summary>
     private static string BuildSyncScript(string id, string hexExpression, string alphaExpression)
     {

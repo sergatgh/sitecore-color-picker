@@ -18,13 +18,9 @@ namespace SoftConsulting.ColorPicker.Uninstall
     /// Read-only scan for anything that would make it unsafe to blindly remove this module's
     /// items - see <see cref="ColorPickerUsageReport"/> for the three things it checks. Never
     /// mutates anything; <see cref="IColorPickerUninstaller"/> is the counterpart that acts on
-    /// this report's findings (converting fields, detaching validator references, deleting
-    /// items).
-    ///
-    /// Only content database(s) - <see cref="IContentDatabaseResolver.GetContentDatabases"/> -
-    /// are scanned, not "core": template field items, Palette items and the swatch validator
-    /// item all live in the content database(s) an author works in, same as every
-    /// Initialize*.cs bootstrap processor in this module provisions them there.
+    /// these findings. Only the content database(s) -
+    /// <see cref="IContentDatabaseResolver.GetContentDatabases"/> - are scanned, not "core",
+    /// since that's where template fields, Palette items, and the validator all live.
     /// </summary>
     public class ColorPickerUsageScanner : IColorPickerUsageScanner
     {
@@ -35,15 +31,19 @@ namespace SoftConsulting.ColorPicker.Uninstall
             this.contentDatabaseResolver = contentDatabaseResolver ?? new ContentDatabaseResolver();
         }
 
-        // Mirrors the value InitializeColorPickerFieldType.cs's field-type item exposes in the
-        // Type dropdown - what a template field's "Type" holds once an author picks it.
-        private const string ColorPickerFieldTypeName = "Color Picker";
+        // Mirrors the field type item's own Sitecore name - the leaf item at
+        // /sitecore/system/Field types/Color Picker/Color (see the "FieldType" include in
+        // serialization/ColorPicker/ColorPicker.module.json), not the "Color Picker" category
+        // folder it lives under. This is what a template field's "Type" holds once an author
+        // picks it from the Type dropdown.
+        private const string ColorPickerFieldTypeName = "Color";
 
-        // Mirrors InitializeSwatchValidator.cs.
+        // Mirrors the "SwatchValidator" include in serialization/ColorPicker/ColorPicker.module.json.
         private const string ValidatorItemPath =
             "/sitecore/system/Settings/Validation Rules/Field Rules/Color Picker/Color Picker Swatch";
 
-        // Mirrors InitializeColorPickerPalette.cs.
+        // Mirrors the "PaletteTemplate"/"PalettesFolder" includes in
+        // serialization/ColorPicker/ColorPicker.module.json.
         private const string PaletteTemplatePath = "/sitecore/templates/Foundation/Color Picker/Palette";
         private const string PaletteModuleFolderPath = "/sitecore/system/Modules/Color Picker/Palettes";
         private static readonly string[] SeedPaletteNames = { "Material Design", "Flat UI Colors" };
@@ -53,7 +53,7 @@ namespace SoftConsulting.ColorPicker.Uninstall
         // needed when linking in from an external admin page rather than from inside the shell.
         // "fo" (force open) is what actually makes the Content Tree expand to and select "id"
         // itself - without it the tree stops one level up and selects the parent instead.
-        // Not executable against a live instance from here - verify against your own 10.4.1
+        // Not executable against a live instance from here - verify against your own Sitecore
         // install; if wrong, only BuildContentEditorUrl needs fixing.
         private const string ContentEditorUrlFormat = "/sitecore/shell/Applications/Content Editor.aspx?sc_bw=1&id={0}&fo={0}&db={1}";
 
@@ -194,35 +194,28 @@ namespace SoftConsulting.ColorPicker.Uninstall
 
     /// <summary>
     /// Result of <see cref="IColorPickerUsageScanner.Scan"/> - everything that should be
-    /// reviewed, and possibly acted on, before this module's items are removed.
+    /// reviewed, and possibly acted on, before this module stops being deployed.
     /// </summary>
     public class ColorPickerUsageReport
     {
         /// <summary>
-        /// Template fields whose Type is "Color Picker". Removing the field type item itself
-        /// (core database) while any of these exist would leave those fields unable to resolve
-        /// their editor - this is the blocking condition
-        /// <see cref="IColorPickerUninstaller.RemoveModuleItems"/> refuses to proceed past, and
-        /// what <see cref="IColorPickerUninstaller.ConvertFieldToSingleLineText"/>/
-        /// <see cref="IColorPickerUninstaller.ConvertAllFieldsToSingleLineText"/> exist to clear.
+        /// Template fields whose Type is "Color". Removing the field type item while any of
+        /// these exist would leave those fields unable to resolve their editor; that's what
+        /// <see cref="IColorPickerUninstaller.ConvertFieldToSingleLineText"/> exists to clear first.
         /// </summary>
         public IList<ColorPickerFieldUsage> ColorPickerTypedFields { get; } = new List<ColorPickerFieldUsage>();
 
         /// <summary>
-        /// Template fields whose Validators list references the "Color Picker Swatch" validator
-        /// (per the Link Database). Not blocking - the validator item is removed by
-        /// <see cref="IColorPickerUninstaller.RemoveModuleItems"/> regardless of this list - but
-        /// <see cref="IColorPickerUninstaller.RemoveValidatorReference"/>/
-        /// <see cref="IColorPickerUninstaller.RemoveAllValidatorReferences"/> let an admin detach
-        /// these first so no field is left with a dangling reference.
+        /// Template fields whose Validators list references the "Color Picker Swatch" validator.
+        /// Not blocking, but <see cref="IColorPickerUninstaller.RemoveValidatorReference"/> lets
+        /// an admin detach these first so no field is left with a dangling reference.
         /// </summary>
         public IList<ColorPickerFieldUsage> SwatchValidatorFields { get; } = new List<ColorPickerFieldUsage>();
 
         /// <summary>
-        /// Items based on the "Palette" template that are not one of the two seeded samples
-        /// ("Material Design", "Flat UI Colors"). These would be orphaned if the Palette
-        /// template were deleted - see <see cref="IColorPickerUninstaller.RemovePaletteItem"/>/
-        /// <see cref="IColorPickerUninstaller.RemoveAllPaletteItems"/>.
+        /// Items based on the "Palette" template that are not one of the two seeded samples.
+        /// These would be orphaned if the Palette template were deleted - see
+        /// <see cref="IColorPickerUninstaller.RemovePaletteItem"/>.
         /// </summary>
         public IList<ColorPickerPaletteUsage> CustomPalettes { get; } = new List<ColorPickerPaletteUsage>();
 
@@ -248,15 +241,12 @@ namespace SoftConsulting.ColorPicker.Uninstall
         /// <summary>
         /// The specific field on this item whose Validators list holds the swatch-validator
         /// reference - only populated on a <see cref="ColorPickerUsageReport.SwatchValidatorFields"/>
-        /// entry; null otherwise. Needed by
-        /// <see cref="IColorPickerUninstaller.RemoveValidatorReference"/> to edit exactly that
-        /// field rather than guessing which one holds the reference.
+        /// entry; null otherwise.
         /// </summary>
         public ID ValidatorFieldId { get; set; }
 
         /// <summary>
-        /// Display name of the field identified by <see cref="ValidatorFieldId"/> - i.e. where
-        /// exactly on this template field the swatch validator reference lives (typically
+        /// Display name of the field identified by <see cref="ValidatorFieldId"/> (typically
         /// "Validation"). Only populated alongside <see cref="ValidatorFieldId"/>.
         /// </summary>
         public string ValidatorFieldName { get; set; }

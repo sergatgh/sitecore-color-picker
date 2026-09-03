@@ -99,14 +99,6 @@ h2 {
     background: #2f5cc4;
 }
 
-.cp-btn-wizard.cp-btn-danger {
-    background: #c0392b;
-}
-
-.cp-btn-wizard.cp-btn-danger:hover {
-    background: #a5301f;
-}
-
 .cp-btn-wizard.cp-btn-secondary {
     background: #d3d1e2eb;
     color: #fff;
@@ -237,13 +229,13 @@ td.cp-path {
     font-size: 12px;
 }
 
-/* Manifest / final ------------------------------------------------------*/
+/* Files to remove --------------------------------------------------------*/
 
-#cp-manifest ul, #cp-final ul {
+#cp-files ul {
     padding-left: 20px;
 }
 
-#cp-manifest code, #cp-final code {
+#cp-files code {
     background: #f3f5f8;
     padding: 1px 4px;
     border-radius: 4px;

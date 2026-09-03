@@ -328,50 +328,21 @@
         });
     }
 
-    // ---- step 4: preview + final removal --------------------------------------
+    // ---- step 4: files to remove by hand ---------------------------------------
 
     function scanStep4(button) {
         return withSpinner(button, function () {
-            return apiCall("manifest").then(renderManifest)
+            return apiCall("files").then(renderFiles)
                 .catch(function (err) { showBanner(err.message, err.details); });
         });
     }
 
-    function renderManifest(manifest) {
-        var html = "<h3>Sitecore items that will be removed</h3><ul>" +
-            manifest.ItemPathsToRemove.map(function (p) { return "<li><code>" + escapeHtml(p) + "</code></li>"; }).join("") +
-            "</ul>";
+    function renderFiles(files) {
+        var html = files.length
+            ? "<ul>" + files.map(function (f) { return "<li><code>" + escapeHtml(f) + "</code></li>"; }).join("") + "</ul>"
+            : "<p class=\"cp-hint\">None found.</p>";
 
-        if (manifest.WillKeepPaletteTemplate) {
-            html += "<p class=\"cp-hint\">" + escapeHtml(manifest.KeepPaletteTemplateReason) + "</p>";
-        }
-
-        document.getElementById("cp-manifest").innerHTML = html;
-    }
-
-    function removeModule() {
-        var button = document.getElementById("cp-remove");
-        if (!window.confirm(
-            "Remove the Color Picker module's Sitecore items now? This only deletes Sitecore " +
-            "items - it never deletes any file - and cannot be undone.")) {
-            return;
-        }
-
-        withSpinner(button, function () {
-            return apiCall("removeModule", { method: "POST" }).then(function (result) {
-                var html = "<h3>" + (result.Success ? "Removal complete" : "Removal finished with issues") + "</h3>";
-                if (result.Message) {
-                    html += "<p class=\"cp-hint\">" + escapeHtml(result.Message) + "</p>";
-                }
-                html += "<h3>Manual cleanup</h3><p>These files are still loaded by this application and " +
-                    "cannot be deleted while it is running - delete them by hand, then recycle the " +
-                    "application pool:</p><ul>" +
-                    result.ManualCleanupFiles.map(function (f) { return "<li><code>" + escapeHtml(f) + "</code></li>"; }).join("") +
-                    "</ul>";
-                document.getElementById("cp-final").innerHTML = html;
-                button.disabled = true;
-            }).catch(function (err) { showBanner(err.message, err.details); });
-        });
+        document.getElementById("cp-files").innerHTML = html;
     }
 
     // ---- wiring -----------------------------------------------------------
@@ -410,6 +381,5 @@
         onRowAction(document.getElementById("cp-table-3"), function (btn, row) { removeOnePalette(btn, row); });
 
         document.querySelector('[data-action="scan-4"]').addEventListener("click", function (e) { scanStep4(e.currentTarget); });
-        document.getElementById("cp-remove").addEventListener("click", removeModule);
     });
 })();
