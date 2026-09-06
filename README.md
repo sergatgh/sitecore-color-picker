@@ -3,6 +3,8 @@
 A color picker field for the Sitecore Content Editor — pick a color with the native browser color
 dialog, or type a hex value directly.
 
+<img  alt="Sitecore Color Picker field example" src="https://github.com/user-attachments/assets/0be15d34-1fa6-4563-98dd-1703540b3315" />
+
 - Optional transparency support (alpha slider, 8-digit `#RRGGBBAA` hex)
 - Supports Sitecore XP **10.1+**
 - Available on NuGet
@@ -12,7 +14,7 @@ dialog, or type a hex value directly.
 ### Manually
 
 1. Download the latest Sitecore install package (`.zip`) from the
-   GitHub Releases page
+   [GitHub Releases page](https://github.com/sergatgh/sitecore-color-picker/releases)
 2. Install it the usual way, via the **Control Panel → Install a package**.
 
 ### Sitecore PowerShell
@@ -20,7 +22,7 @@ dialog, or type a hex value directly.
 Run this from the SPE ISE to download the latest package from GitHub and install it in one step:
 
 ```powershell
-$releaseUrl = "https://github.com/sergatgh/sitecore-color-picker/releases/latest/download/SoftConsulting.ColorPicker.zip"
+$releaseUrl = "https://github.com/sergatgh/sitecore-color-picker/releases/download/1.0.0.0/SoftConsulting-ColorPicker-1.0.0.0.zip"
 $packagePath = Join-Path $env:TEMP "SoftConsulting.ColorPicker.zip"
 
 Invoke-WebRequest -Uri $releaseUrl -OutFile $packagePath
@@ -33,14 +35,14 @@ Add a field of type **Color** (listed under the "Color Picker" category in the T
 the Template Editor, then use its **Source** (Data Source) field to control palettes,
 transparency, and rendering:
 
-| Parameter | Example | Description |
-| --- | --- | --- |
-| `Transparency` | `Transparency=true` | Enables the alpha slider and 8-digit `#RRGGBBAA` hex entry. Omitted (or any other value) keeps the field a plain 6-digit opaque picker — the default. |
-| `Palette` (item) | `Palette=/sitecore/system/Modules/Color Picker/Palettes/Material Design` | Path or ID of a **Palette** item. Each `name`/`value` pair in its **Colors** field becomes one swatch. |
-| `Palette` (inline) | `Palette=Brand Blue:#0052CC;Brand Red:#DE350B` | Semicolon-separated `Name:RRGGBB` (or `Name:RRGGBBAA`) swatches defined directly in the Source. Wrap a name in `[...]` if it needs to contain `:`. |
-| `Palette` (repeated) | `Palette=palette1\|Palette=palette2` | Multiple `Palette` segments combine — swatches from each are appended in order. |
-| `View` | `View=/Views/Shared/MyColor.cshtml` | Overrides the default rendering view (`~/Views/ColorPicker/Field.cshtml`). If given more than once, the last one wins. |
-| Shorthand | `/sitecore/system/Modules/Color Picker/Palettes/Material Design` or `Red:#FF0000` or `Red=FF0000` | If Source has no `\|`, it's treated as a single `Palette` value. |
+| Parameter | Example | Description | Image |
+| --- | --- | --- | --- |
+| `Transparency` | `Transparency=true` | Enables the alpha slider and 8-digit `#RRGGBBAA` hex entry. Omitted (or any other value) keeps the field a plain 6-digit opaque picker — the default. | <img width="354" height="89" alt="image" src="https://github.com/user-attachments/assets/e07451cb-c896-41a9-82e2-d80829ce4c6c" /> |
+| `Palette` (item) | `Palette=/sitecore/system/Modules/Color Picker/Palettes/Material Design` | Path or ID of a **Palette** item. Each `name`/`value` pair in its **Colors** field becomes one swatch. | <img width="496" height="86" alt="image" src="https://github.com/user-attachments/assets/ef20521a-fcbe-48ff-9c07-d8cd575f13d7" /> |
+| `Palette` (inline) | `Palette=Brand Blue:#0052CC;Brand Red:#DE350B` | Semicolon-separated `Name:RRGGBB` (or `Name:RRGGBBAA`) swatches defined directly in the Source. Wrap a name in `[...]` if it needs to contain `:`. | <img width="247" height="113" alt="image" src="https://github.com/user-attachments/assets/8bc3c9e3-2c53-4bf7-bf36-9e09a6cef93a" /> |
+| `Palette` (repeated) | `Palette=palette1\|Palette=palette2` | Multiple `Palette` segments combine — swatches from each are appended in order. | <img width="427" height="152" alt="image" src="https://github.com/user-attachments/assets/e1a6424a-0379-48d0-b3fe-e19b3436d0f1" /> |
+| `View` | `View=/Views/Shared/MyColor.cshtml` | Overrides the default rendering view (`~/Views/ColorPicker/Field.cshtml`). If given more than once, the last one wins. | No Image |
+| Shorthand | `/sitecore/system/Modules/Color Picker/Palettes/Material Design` or `Red:#FF0000` or `Red=FF0000` | If Source has no `\|`, it's treated as a single `Palette` value. | <img width="220" height="90" alt="image" src="https://github.com/user-attachments/assets/5be58dba-dc99-4323-b009-05b862e6f3f4" /> |
 
 Combine any of the above in one Source with `|`, e.g.:
 
