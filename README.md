@@ -1,5 +1,7 @@
 # Color Picker Field
 
+[![NuGet](https://img.shields.io/nuget/v/SoftConsulting.ColorPicker.svg?style=plastic)](https://www.nuget.org/packages/SoftConsulting.ColorPicker/)
+
 A color picker field for the Sitecore Content Editor — pick a color with the native browser color
 dialog, or type a hex value directly.
 
