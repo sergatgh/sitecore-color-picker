@@ -13,8 +13,7 @@ dialog, or type a hex value directly.
 
 1. Download the latest Sitecore install package (`.zip`) from the
    GitHub Releases page
-2. Install it the usual way, e.g. via the Sitecore **Installation Wizard**
-   (`/sitecore/admin/InstallPackage.aspx`) or the **Control Panel → Install a package**.
+2. Install it the usual way, via the **Control Panel → Install a package**.
 
 ### Sitecore PowerShell
 

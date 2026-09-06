@@ -1,19 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!--
-  Packs the built SoftConsulting.ColorPicker.dll plus the module's non-compiled assets (App_Config
-  include, Razor view, uninstall admin page, Items-as-Resources .dat files) as NuGet "content"
-  files, so `nuget install` /
-  `Install-Package` (classic packages.config-style, matching this project's own consumption model)
-  drops them into a consumer's Sitecore web application project at the same relative paths used
-  here, and wires them into the consumer's .csproj automatically.
-
-  Build first (produces bin\SoftConsulting.ColorPicker.dll), then pack:
-
-    nuget pack SoftConsulting.ColorPicker.nuspec -Version 1.0.0 -OutputDirectory artifacts
-
-  TODO before first publish: confirm/adjust <authors>, <owners>, <license>, <projectUrl> below -
-  no license or repo URL is set yet (see PR/chat notes).
--->
 <package>
   <metadata>
     <id>SoftConsulting.ColorPicker</id>
@@ -22,11 +7,9 @@
     <authors>Sergey Solomentsev</authors>
     <owners>Sergey Solomentsev</owners>
     <description>
-      A custom Sitecore Content Editor field that lets an author pick a color via a native browser
+      A custom Sitecore Content Editor field that lets pick a color via a native browser
       color picker or by typing a hex value directly, with optional swatch palettes and optional
-      transparency (8-digit #RRGGBBAA) support. Ships its own Sitecore items as Items-as-Resources
-      .dat files, auto-installed by Sitecore on application start - no CLI step, no package
-      install. Supports Sitecore XP 10.1+ (Items as Resources requires 10.1+).
+      transparency (8-digit #RRGGBBAA) support. Supports Sitecore XP 10.1+.
     </description>
     <tags>sitecore sitecore-module content-editor field color-picker</tags>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
@@ -36,24 +19,6 @@
     <file src="NUGET_README.md" target="docs\README.md" />
 
     <file src="bin\SoftConsulting.ColorPicker.dll" target="lib\net48\SoftConsulting.ColorPicker.dll" />
-
-    <file src="App_Config\Modules\ColorPicker\SoftConsulting.ColorPicker.Services.config"
-          target="content\App_Config\Modules\ColorPicker\SoftConsulting.ColorPicker.Services.config" />
-    <file src="App_Config\Modules\ColorPicker\SoftConsulting.ColorPicker.Fields.config"
-          target="content\App_Config\Modules\ColorPicker\SoftConsulting.ColorPicker.Fields.config" />
-
-    <file src="sitecore modules\items\core\items.core.ColorPicker.dat"
-          target="content\sitecore modules\items\core\items.core.ColorPicker.dat" />
-    <file src="sitecore modules\items\master\items.master.ColorPicker.dat"
-          target="content\sitecore modules\items\master\items.master.ColorPicker.dat" />
-
-    <file src="serialization\ColorPicker\**\*.*" target="content\serialization\ColorPicker" />
-
-    <file src="Views\ColorPicker\Field.cshtml" target="content\Views\ColorPicker\Field.cshtml" />
-
-    <file src="sitecore\admin\ColorPicker\Uninstall.aspx" target="content\sitecore\admin\ColorPicker\Uninstall.aspx" />
-    <file src="sitecore\admin\ColorPicker\Uninstall.css" target="content\sitecore\admin\ColorPicker\Uninstall.css" />
-    <file src="sitecore\admin\ColorPicker\Uninstall.js" target="content\sitecore\admin\ColorPicker\Uninstall.js" />
-    <file src="sitecore\admin\ColorPicker\UninstallApi.ashx" target="content\sitecore\admin\ColorPicker\UninstallApi.ashx" />
+    <file src="bin\SoftConsulting.ColorPicker.pdb" target="lib\net48\SoftConsulting.ColorPicker.pdb" />
   </files>
 </package>
