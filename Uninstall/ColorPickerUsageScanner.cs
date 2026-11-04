@@ -36,7 +36,7 @@ namespace SoftConsulting.ColorPicker.Uninstall
         // serialization/ColorPicker/ColorPicker.module.json), not the "Color Picker" category
         // folder it lives under. This is what a template field's "Type" holds once an author
         // picks it from the Type dropdown.
-        private const string ColorPickerFieldTypeName = "Color";
+        private const string ColorPickerFieldTypeName = "Color Picker";
 
         // Mirrors the "SwatchValidator" include in serialization/ColorPicker/ColorPicker.module.json.
         private const string ValidatorItemPath =
