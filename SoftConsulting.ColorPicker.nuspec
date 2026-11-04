@@ -14,9 +14,11 @@
     <tags>sitecore sitecore-module content-editor field color-picker</tags>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <readme>docs\README.md</readme>
+    <icon>images\icon.png</icon>
   </metadata>
   <files>
     <file src="NUGET_README.md" target="docs\README.md" />
+    <file src="icon.png" target="images\icon.png" />
 
     <file src="bin\SoftConsulting.ColorPicker.dll" target="lib\net48\SoftConsulting.ColorPicker.dll" />
     <file src="bin\SoftConsulting.ColorPicker.pdb" target="lib\net48\SoftConsulting.ColorPicker.pdb" />
