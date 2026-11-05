@@ -31,6 +31,15 @@ namespace SoftConsulting.ColorPicker.Fields
         /// </summary>
         public bool AllowCustomColor { get; set; } = true;
 
+        /// <summary>
+        /// Whether the current user may not edit this field (no write access to the item, item
+        /// locked by someone else, field-level write denied, protected item, etc. - whatever
+        /// made the Content Editor flag the field control as ReadOnly/Disabled). When true, the
+        /// view renders every interactive element (swatches, native color dialog, hex textbox,
+        /// alpha slider) disabled, while still showing the current value.
+        /// </summary>
+        public bool ReadOnly { get; set; }
+
         public List<ColorPickerSwatchViewModel> Swatches { get; set; } = new List<ColorPickerSwatchViewModel>();
     }
 

@@ -8,6 +8,10 @@
     are stored as "#RRGGBB"/"#RRGGBBAA" (see ColorPickerUtils.NormalizeHex), and transparency
     editing (alpha slider, 8-digit hex) is opt-in via the field's Source ("Transparency=true"),
     and free color picking (native dialog, typed hex) can be turned off with "CustomColor=false".
+    When the user cannot edit the field (Model.ReadOnly), every control is rendered disabled
+    (hex textbox read-only) - "disabled"/"readonly" attributes use Razor's conditional-attribute
+    support, so a null value omits the attribute entirely. The hidden input is never disabled,
+    since a disabled input is dropped from the form post and the value must still round-trip.
 *@
 @functions
 {
@@ -113,7 +117,11 @@
         return !string.IsNullOrEmpty(hex) && hex.Length >= 9 ? System.Convert.ToInt32(hex.Substring(7, 2), 16) : 255;
     }
 }
-<div id="@(Model.Id)_wrapper" class="scColorPickerField" style="display:flex;flex-wrap:wrap;align-items:center;gap:6px;max-width:100%;box-sizing:border-box;">
+@{
+    var disabledAttr = Model.ReadOnly ? "disabled" : null;
+    var cursorStyle = Model.ReadOnly ? "cursor:not-allowed;opacity:0.6;" : "cursor:pointer;";
+}
+<div id="@(Model.Id)_wrapper" class="@(Model.ReadOnly ? "scColorPickerField scColorPickerReadOnly" : "scColorPickerField")" style="display:flex;flex-wrap:wrap;align-items:center;gap:6px;max-width:100%;box-sizing:border-box;">
     <input type="hidden" id="@Model.Id" name="@Model.Id" value="@Model.Value" />
     @if (Model.Swatches.Count == 0 && !Model.AllowCustomColor)
     {
@@ -147,7 +155,8 @@
                     // not the checkerboard/translucent rendering.
                     var swatchDisplayHex = Model.AllowTransparency ? swatch.Hex : swatchRgb;
                     <button type="button" class="@cssClass" title="@(swatch.Name) (@swatchDisplayHex)"
-                            style="display:inline-block;width:22px;height:22px;padding:0;@(BuildSwatchBackgroundStyle(swatchDisplayHex));border:@borderStyle;cursor:pointer;"
+                            style="display:inline-block;width:22px;height:22px;padding:0;@(BuildSwatchBackgroundStyle(swatchDisplayHex));border:@borderStyle;@cursorStyle"
+                            disabled="@disabledAttr"
                             onclick="@Html.Raw(BuildSyncScript(Model.Id, "'" + swatchRgb + "'", swatchAlpha))"></button>
                 }
             </span>
@@ -156,11 +165,13 @@
         {
             <input type="color" id="@(Model.Id)_native" value="@Model.NativeValue"
                    title="Choose a color"
-                   style="width:36px;height:28px;padding:0;border:1px solid #b9c0c7;cursor:pointer;"
+                   style="width:36px;height:28px;padding:0;border:1px solid #b9c0c7;@cursorStyle"
+                   disabled="@disabledAttr"
                    onchange="@Html.Raw(BuildNativeChangeScript(Model.Id, Model.AllowTransparency))" />
             <input type="text" id="@(Model.Id)_hex" class="scColorPickerHex" maxlength="@(Model.AllowTransparency ? 9 : 7)"
                    value="@(Model.AllowTransparency ? Model.Value : GetRgbPortion(Model.Value))"
                    placeholder="@(Model.AllowTransparency ? "#RRGGBB[AA]" : "#RRGGBB")" style="width:96px;"
+                   readonly="@(Model.ReadOnly ? "readonly" : null)"
                    onchange="@Html.Raw(BuildHexChangeScript(Model.Id, Model.AllowTransparency))" />
         }
         else
@@ -176,7 +187,8 @@
         {
             <input type="range" id="@(Model.Id)_alpha" class="scColorPickerAlpha" min="0" max="255" step="1"
                    value="@GetAlpha(Model.Value)" title="Adjust transparency"
-                   style="width:70px;"
+                   style="width:70px;@(Model.ReadOnly ? "cursor:not-allowed;opacity:0.6;" : null)"
+                   disabled="@disabledAttr"
                    oninput="@Html.Raw(BuildAlphaInputScript(Model.Id))" />
 
             // The live preview needs some value to paint even when no color has been chosen yet -

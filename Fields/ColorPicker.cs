@@ -53,8 +53,9 @@ namespace SoftConsulting.ColorPicker.Fields
                 // compile/render failures, not just C#-side errors.
                 Sitecore.Diagnostics.Log.Error("ColorPicker field failed to render: " + ex, this);
                 output.Write(
-                    "<input type=\"text\" id=\"{0}\" name=\"{0}\" value=\"{1}\" />",
-                    this.ID, HttpUtility.HtmlEncode(this.Value ?? string.Empty));
+                    "<input type=\"text\" id=\"{0}\" name=\"{0}\" value=\"{1}\"{2} />",
+                    this.ID, HttpUtility.HtmlEncode(this.Value ?? string.Empty),
+                    this.IsReadOnly() ? " readonly=\"readonly\"" : string.Empty);
             }
         }
 
@@ -91,7 +92,8 @@ namespace SoftConsulting.ColorPicker.Fields
                 Value = value,
                 NativeValue = nativeValue,
                 AllowTransparency = parsedSource.AllowTransparency,
-                AllowCustomColor = parsedSource.AllowCustomColor
+                AllowCustomColor = parsedSource.AllowCustomColor,
+                ReadOnly = this.IsReadOnly()
             };
 
             foreach (var swatch in parsedSource.Swatches)
@@ -102,6 +104,12 @@ namespace SoftConsulting.ColorPicker.Fields
 
             return model;
         }
+
+        // The Content Editor's EditorFormatter sets ReadOnly on the field control whenever the
+        // current user cannot edit the field - no write access to the item, item locked by
+        // another user, field write denied, item protected, read-only database, etc. - so all
+        // of those permission checks are already folded into this one flag.
+        protected virtual bool IsReadOnly() => this.ReadOnly || this.Disabled;
 
         // The Content Editor edits against the content database (typically "master"), so
         // Palette item references in Source are resolved against it, same as built-in
