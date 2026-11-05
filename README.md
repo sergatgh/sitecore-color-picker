@@ -53,6 +53,26 @@ Combine any of the above in one Source with `|`, e.g.:
 Palette=/sitecore/system/Modules/Color Picker/Palettes/Material Design|Palette=Faded Blue:#0000FF80|Transparency=true
 ```
 
+### Tips
+
+#### Always keep a valid color in the field
+
+The picker only ever saves valid hex colors, but an editor can still type anything into the
+field's raw value (**View → Raw values**). To reject invalid values on save, open the template
+field item (e.g. `/sitecore/templates/User Defined/.../Case Color`) and fill in:
+
+**Validation**
+
+```
+^(#?[0-9A-Fa-f]{6}([0-9A-Fa-f]{2})?)?$
+```
+
+**Validation Text**
+
+```
+'$Value' is not a valid color. Use a hex value like #0052CC, or #0052CC80 with transparency.
+```
+
 ## Uninstalling
 
 ### Admin page
