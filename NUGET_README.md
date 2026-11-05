@@ -54,6 +54,7 @@ public class ColorPickerViewModel
     public string Value { get; set; }                            // current "#RRGGBB"/"#RRGGBBAA", or ""
     public string NativeValue { get; set; }                       // RGB portion, safe for <input type="color">
     public bool AllowTransparency { get; set; }                  // Source had "Transparency=true"
+    public bool AllowCustomColor { get; set; }                   // false when Source had "CustomColor=false"
     public List<ColorPickerSwatchViewModel> Swatches { get; set; } // palette, if any
 }
 

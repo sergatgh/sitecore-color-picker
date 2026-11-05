@@ -90,7 +90,8 @@ namespace SoftConsulting.ColorPicker.Fields
                 Id = id,
                 Value = value,
                 NativeValue = nativeValue,
-                AllowTransparency = parsedSource.AllowTransparency
+                AllowTransparency = parsedSource.AllowTransparency,
+                AllowCustomColor = parsedSource.AllowCustomColor
             };
 
             foreach (var swatch in parsedSource.Swatches)

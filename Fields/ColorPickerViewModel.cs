@@ -24,6 +24,13 @@ namespace SoftConsulting.ColorPicker.Fields
         /// </summary>
         public bool AllowTransparency { get; set; }
 
+        /// <summary>
+        /// Whether free color picking is allowed (the default). When false ("CustomColor=false"
+        /// in Source), the view omits the native color dialog and makes the hex textbox
+        /// read-only, so only the palette swatches can set the value.
+        /// </summary>
+        public bool AllowCustomColor { get; set; } = true;
+
         public List<ColorPickerSwatchViewModel> Swatches { get; set; } = new List<ColorPickerSwatchViewModel>();
     }
 

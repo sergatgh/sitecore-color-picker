@@ -6,7 +6,8 @@
     built by BuildSyncScript/BuildHexChangeScript/BuildAlphaInputScript is written via Html.Raw
     as raw JS, unlike every other value below which relies on Razor's automatic encoding. Colors
     are stored as "#RRGGBB"/"#RRGGBBAA" (see ColorPickerUtils.NormalizeHex), and transparency
-    editing (alpha slider, 8-digit hex) is opt-in via the field's Source ("Transparency=true").
+    editing (alpha slider, 8-digit hex) is opt-in via the field's Source ("Transparency=true"),
+    and free color picking (native dialog, typed hex) can be turned off with "CustomColor=false".
 *@
 @functions
 {
@@ -114,52 +115,78 @@
 }
 <div id="@(Model.Id)_wrapper" class="scColorPickerField" style="display:flex;flex-wrap:wrap;align-items:center;gap:6px;max-width:100%;box-sizing:border-box;">
     <input type="hidden" id="@Model.Id" name="@Model.Id" value="@Model.Value" />
-    @if (Model.Swatches.Count > 0)
+    @if (Model.Swatches.Count == 0 && !Model.AllowCustomColor)
     {
-        <span class="scColorPickerSwatches" style="display:inline-flex;flex-wrap:wrap;gap:4px;max-width:100%;">
-            @foreach (var swatch in Model.Swatches)
-            {
-                // A <button>, not an <a>, since anchor tags are prone to being specially
-                // styled/reset by Content Editor chrome CSS (this is what was silently hiding
-                // the swatches even though they were rendering with correct inline styles).
-                var cssClass = swatch.Selected ? "scColorPickerSwatch scColorPickerSwatchSelected" : "scColorPickerSwatch";
-                var borderStyle = swatch.Selected ? "2px solid #1e88e5" : "1px solid #b9c0c7";
-                var swatchRgb = GetRgbPortion(swatch.Hex);
-                var swatchAlpha = Model.AllowTransparency ? GetAlpha(swatch.Hex).ToString() : "255";
-
-                // A palette can list an "#RRGGBBAA" swatch even when this field's Source has
-                // Transparency off - the field just isn't supposed to show/edit alpha in that
-                // case, so the swatch box itself must be drawn as its plain opaque RGB portion,
-                // not the checkerboard/translucent rendering.
-                var swatchDisplayHex = Model.AllowTransparency ? swatch.Hex : swatchRgb;
-                <button type="button" class="@cssClass" title="@(swatch.Name) (@swatchDisplayHex)"
-                        style="display:inline-block;width:22px;height:22px;padding:0;@(BuildSwatchBackgroundStyle(swatchDisplayHex));border:@borderStyle;cursor:pointer;"
-                        onclick="@Html.Raw(BuildSyncScript(Model.Id, "'" + swatchRgb + "'", swatchAlpha))"></button>
-            }
+        // Nothing to pick from: the Source disabled custom colors ("CustomColor=false") without
+        // configuring any palette swatches. The hidden input above is still rendered so the
+        // stored value round-trips untouched instead of being cleared on save.
+        <span class="scColorPickerMessage" style="color:#b00020;">
+            No colors are available: this field's Source disables custom color picking
+            ("CustomColor=false") and defines no palette swatches. Add a Palette to the Source
+            or enable custom color picking.
         </span>
     }
-    <input type="color" id="@(Model.Id)_native" value="@Model.NativeValue"
-           title="Choose a color"
-           style="width:36px;height:28px;padding:0;border:1px solid #b9c0c7;cursor:pointer;"
-           onchange="@Html.Raw(BuildNativeChangeScript(Model.Id, Model.AllowTransparency))" />
-    <input type="text" id="@(Model.Id)_hex" class="scColorPickerHex" maxlength="@(Model.AllowTransparency ? 9 : 7)"
-           value="@(Model.AllowTransparency ? Model.Value : GetRgbPortion(Model.Value))"
-           placeholder="@(Model.AllowTransparency ? "#RRGGBB[AA]" : "#RRGGBB")" style="width:96px;"
-           onchange="@Html.Raw(BuildHexChangeScript(Model.Id, Model.AllowTransparency))" />
-    @if (Model.AllowTransparency)
+    else
     {
-        <input type="range" id="@(Model.Id)_alpha" class="scColorPickerAlpha" min="0" max="255" step="1"
-               value="@GetAlpha(Model.Value)" title="Adjust transparency"
-               style="width:70px;"
-               oninput="@Html.Raw(BuildAlphaInputScript(Model.Id))" />
+        if (Model.Swatches.Count > 0)
+        {
+            <span class="scColorPickerSwatches" style="display:inline-flex;flex-wrap:wrap;gap:4px;max-width:100%;">
+                @foreach (var swatch in Model.Swatches)
+                {
+                    // A <button>, not an <a>, since anchor tags are prone to being specially
+                    // styled/reset by Content Editor chrome CSS (this is what was silently hiding
+                    // the swatches even though they were rendering with correct inline styles).
+                    var cssClass = swatch.Selected ? "scColorPickerSwatch scColorPickerSwatchSelected" : "scColorPickerSwatch";
+                    var borderStyle = swatch.Selected ? "2px solid #1e88e5" : "1px solid #b9c0c7";
+                    var swatchRgb = GetRgbPortion(swatch.Hex);
+                    var swatchAlpha = Model.AllowTransparency ? GetAlpha(swatch.Hex).ToString() : "255";
 
-        // The live preview needs some value to paint even when no color has been chosen yet -
-        // fully-transparent black shows as plain checkerboard in that case, same idea as
-        // NativeValue's "#000000" fallback for the native color input. Only rendered when
-        // transparency editing is on - with it off, the hex textbox/native swatch already show
-        // the color, so a second solid preview would be redundant.
-        var previewValue = string.IsNullOrEmpty(Model.Value) ? "#00000000" : Model.Value;
-        <span id="@(Model.Id)_preview" class="scColorPickerPreview" title="Preview"
-              style="display:inline-block;width:22px;height:22px;border:1px solid #b9c0c7;@(BuildSwatchBackgroundStyle(previewValue))"></span>
+                    // A palette can list an "#RRGGBBAA" swatch even when this field's Source has
+                    // Transparency off - the field just isn't supposed to show/edit alpha in that
+                    // case, so the swatch box itself must be drawn as its plain opaque RGB portion,
+                    // not the checkerboard/translucent rendering.
+                    var swatchDisplayHex = Model.AllowTransparency ? swatch.Hex : swatchRgb;
+                    <button type="button" class="@cssClass" title="@(swatch.Name) (@swatchDisplayHex)"
+                            style="display:inline-block;width:22px;height:22px;padding:0;@(BuildSwatchBackgroundStyle(swatchDisplayHex));border:@borderStyle;cursor:pointer;"
+                            onclick="@Html.Raw(BuildSyncScript(Model.Id, "'" + swatchRgb + "'", swatchAlpha))"></button>
+                }
+            </span>
+        }
+        if (Model.AllowCustomColor)
+        {
+            <input type="color" id="@(Model.Id)_native" value="@Model.NativeValue"
+                   title="Choose a color"
+                   style="width:36px;height:28px;padding:0;border:1px solid #b9c0c7;cursor:pointer;"
+                   onchange="@Html.Raw(BuildNativeChangeScript(Model.Id, Model.AllowTransparency))" />
+            <input type="text" id="@(Model.Id)_hex" class="scColorPickerHex" maxlength="@(Model.AllowTransparency ? 9 : 7)"
+                   value="@(Model.AllowTransparency ? Model.Value : GetRgbPortion(Model.Value))"
+                   placeholder="@(Model.AllowTransparency ? "#RRGGBB[AA]" : "#RRGGBB")" style="width:96px;"
+                   onchange="@Html.Raw(BuildHexChangeScript(Model.Id, Model.AllowTransparency))" />
+        }
+        else
+        {
+            // Palette-only ("CustomColor=false"): no native color dialog, and the hex textbox
+            // is a read-only display of the current value - BuildSyncScript still refreshes it
+            // when a swatch is clicked.
+            <input type="text" id="@(Model.Id)_hex" class="scColorPickerHex" readonly="readonly"
+                   value="@(Model.AllowTransparency ? Model.Value : GetRgbPortion(Model.Value))"
+                   title="Pick a color from the palette" style="width:96px;" />
+        }
+        if (Model.AllowTransparency)
+        {
+            <input type="range" id="@(Model.Id)_alpha" class="scColorPickerAlpha" min="0" max="255" step="1"
+                   value="@GetAlpha(Model.Value)" title="Adjust transparency"
+                   style="width:70px;"
+                   oninput="@Html.Raw(BuildAlphaInputScript(Model.Id))" />
+
+            // The live preview needs some value to paint even when no color has been chosen yet -
+            // fully-transparent black shows as plain checkerboard in that case, same idea as
+            // NativeValue's "#000000" fallback for the native color input. Only rendered when
+            // transparency editing is on - with it off, the hex textbox/native swatch already show
+            // the color, so a second solid preview would be redundant.
+            var previewValue = string.IsNullOrEmpty(Model.Value) ? "#00000000" : Model.Value;
+            <span id="@(Model.Id)_preview" class="scColorPickerPreview" title="Preview"
+                  style="display:inline-block;width:22px;height:22px;border:1px solid #b9c0c7;@(BuildSwatchBackgroundStyle(previewValue))"></span>
+        }
     }
 </div>

@@ -18,8 +18,9 @@ namespace SoftConsulting.ColorPicker.Fields
     /// Parses a Color Picker field's Source value into a merged swatch palette plus an optional
     /// custom view override. Source is pipe-separated "Key=Value" segments: repeatable "Palette"
     /// entries (an item path/ID, or an inline "Name:RRGGBB;..." list) merge into one swatch
-    /// list, "View" overrides the rendering view, and "Transparency=true" opts into alpha
-    /// editing; a bare Source with neither '|' nor '=' is treated as a single Palette value.
+    /// list, "View" overrides the rendering view, "Transparency=true" opts into alpha
+    /// editing, and "CustomColor=false" restricts the field to the palette swatches only (no
+    /// native color dialog or typed hex entry); a bare Source with neither '|' nor '=' is treated as a single Palette value.
     /// Malformed or unresolvable pieces (a missing Palette item, an unparsable color, an
     /// ambiguous name) are skipped individually rather than failing the whole Source.
     /// </summary>
@@ -73,6 +74,10 @@ namespace SoftConsulting.ColorPicker.Fields
                 else if (string.Equals(key, "Transparency", StringComparison.OrdinalIgnoreCase))
                 {
                     result.AllowTransparency = ParseBoolean(value);
+                }
+                else if (string.Equals(key, "CustomColor", StringComparison.OrdinalIgnoreCase))
+                {
+                    result.AllowCustomColor = ParseBoolean(value, true);
                 }
                 else
                 {
@@ -201,14 +206,29 @@ namespace SoftConsulting.ColorPicker.Fields
         // (any case, via bool.TryParse) as well as the bare "1" checkbox-field convention. Any
         // other spelling (including an empty/unrecognized value) is treated as "false", keeping
         // transparency opt-in by default.
-        protected virtual bool ParseBoolean(string value)
+        protected virtual bool ParseBoolean(string value) => ParseBoolean(value, false);
+
+        // Same spellings as above, plus the bare "0" checkbox-field convention for "false"; any
+        // other spelling falls back to defaultValue, so an opt-out flag (e.g. CustomColor) is only
+        // turned off by an explicit "false"/"0", never by a typo.
+        protected virtual bool ParseBoolean(string value, bool defaultValue)
         {
             if (bool.TryParse(value, out var flag))
             {
                 return flag;
             }
 
-            return string.Equals(value, "1", StringComparison.Ordinal);
+            if (string.Equals(value, "1", StringComparison.Ordinal))
+            {
+                return true;
+            }
+
+            if (string.Equals(value, "0", StringComparison.Ordinal))
+            {
+                return false;
+            }
+
+            return defaultValue;
         }
 
         // Splits one "Name:RRGGBB" (or "[Name]:RRGGBB") entry. Returns false for anything
@@ -267,5 +287,11 @@ namespace SoftConsulting.ColorPicker.Fields
         /// Defaults to false - a plain opaque color picker, no alpha slider or 8-digit hex entry.
         /// </summary>
         public bool AllowTransparency { get; set; }
+
+        /// <summary>
+        /// Whether free color picking (native color dialog, typed hex entry) is allowed. Defaults
+        /// to true; "CustomColor=false" restricts the field to the palette swatches only.
+        /// </summary>
+        public bool AllowCustomColor { get; set; } = true;
     }
 }
