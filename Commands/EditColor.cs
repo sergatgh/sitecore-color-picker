@@ -1,0 +1,80 @@
+namespace SoftConsulting.ColorPicker.Commands
+{
+    using System;
+    using Sitecore;
+    using Sitecore.Diagnostics;
+    using Sitecore.Text;
+    using Sitecore.Web;
+    using Sitecore.Web.UI.Sheer;
+    using SoftConsulting.ColorPicker.Fields;
+
+    /// <summary>
+    /// "colorpicker:edit" - the Experience Editor's "Edit color" chrome button. Opens the
+    /// ColorPickerDialog (see <see cref="SoftConsulting.ColorPicker.Dialogs.ColorPickerDialogForm"/>)
+    /// for the field's current value and Source, then writes the chosen color back into the field
+    /// on the page, the same way the General Link field's "Edit link" button works.
+    /// </summary>
+    [Serializable]
+    public class EditColor : ColorPickerWebEditCommand
+    {
+        /// <summary>Name of the Sheer XML control (the root element in ColorPickerDialog.xml).</summary>
+        protected virtual string DialogControlName => "SoftConsulting.ColorPicker.Dialog";
+
+        protected virtual string DialogWidth => "780";
+
+        protected virtual string DialogHeight => "620";
+
+        protected override void Run(ClientPipelineArgs args)
+        {
+            Assert.ArgumentNotNull(args, "args");
+
+            var item = this.GetItem(args);
+            if (item == null)
+            {
+                SheerResponse.Alert("The item was not found.\n\nIt may have been deleted by another user.");
+                return;
+            }
+
+            var field = item.Fields[args.Parameters["fieldid"]];
+            Assert.IsNotNull(field, "field");
+
+            if (!args.IsPostBack)
+            {
+                this.ShowDialog(args, field.Source, item.Database.Name);
+                args.WaitForPostBack();
+                return;
+            }
+
+            // Cancel (or closing the dialog) leaves HasResult false - nothing to do.
+            if (!args.HasResult)
+            {
+                return;
+            }
+
+            var value = ColorPickerUtils.NormalizeHex(args.Result);
+            if (value == null)
+            {
+                return;
+            }
+
+            this.UpdateField(args.Parameters["controlid"], this.RenderFieldValue(item, field.Name, value), value);
+        }
+
+        protected virtual void ShowDialog(ClientPipelineArgs args, string fieldSource, string databaseName)
+        {
+            var url = new UrlString(UIUtil.GetUri("control:" + this.DialogControlName));
+
+            // Passed through a session-backed handle rather than the query string: Source can be
+            // long and contain characters ('|', '#', ';') that don't survive a URL comfortably.
+            var handle = new UrlHandle
+            {
+                ["value"] = args.Parameters[FieldValueParameter] ?? string.Empty,
+                ["source"] = fieldSource ?? string.Empty,
+                ["database"] = databaseName ?? string.Empty
+            };
+            handle.Add(url);
+
+            SheerResponse.ShowModalDialog(url.ToString(), this.DialogWidth, this.DialogHeight, string.Empty, true);
+        }
+    }
+}

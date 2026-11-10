@@ -1,0 +1,161 @@
+@model SoftConsulting.ColorPicker.Dialogs.ColorPickerDialogViewModel
+@*
+    Body of the Experience Editor's color picker dialog (ColorPickerDialog.xml). Unlike
+    Field.cshtml this is part of a real page load, not injected via innerHTML, but all behavior
+    still lives in ColorPickerDialog.js, which finds everything below by its data-cp-* attributes
+    and keeps the picked color in the Sheer input named by data-cp-value-input (read back by
+    ColorPickerDialogForm when OK is pressed).
+
+    Modes, driven by the field's Source:
+    - Transparency=true adds the alpha slider and Alpha field, and allows 8-digit values.
+    - CustomColor=false hides the spectrum and value fields: only the palette can be used.
+*@
+@{
+    var hasPalette = Model.Swatches.Count > 0;
+    var paletteOnly = !Model.AllowCustomColor;
+    var showRecent = Model.AllowCustomColor;
+    var paletteChecked = hasPalette ? "checked" : null;
+    var recentChecked = hasPalette ? null : "checked";
+    var rootClass = "cp-dialog"
+        + (paletteOnly ? " cp-palette-only" : string.Empty)
+        + (Model.AllowTransparency ? " cp-transparency" : string.Empty);
+}
+<div class="@rootClass"
+     data-cp-root
+     data-cp-value-input="@Model.ValueInputId"
+     data-cp-original="@Model.Value"
+     data-cp-allow-transparency="@(Model.AllowTransparency ? "true" : "false")"
+     data-cp-allow-custom="@(Model.AllowCustomColor ? "true" : "false")">
+
+    @if (paletteOnly && !hasPalette)
+    {
+        <p class="cp-message">
+            No colors are available: this field's Source disables custom color picking
+            ("CustomColor=false") and defines no palette swatches. Add a Palette to the Source
+            or enable custom color picking.
+        </p>
+    }
+
+    <div class="cp-layout">
+        <div class="cp-left">
+            @if (!paletteOnly)
+            {
+                <div class="cp-spectrum">
+                    <div class="cp-sv" data-cp-sv tabindex="0" role="slider" aria-label="Saturation and brightness">
+                        <div class="cp-sv-white"></div>
+                        <div class="cp-sv-black"></div>
+                        <div class="cp-sv-cursor" data-cp-sv-cursor></div>
+                    </div>
+                    <div class="cp-strip cp-hue" data-cp-hue tabindex="0" role="slider" aria-label="Hue" aria-valuemin="0" aria-valuemax="359">
+                        <div class="cp-strip-thumb" data-cp-hue-thumb></div>
+                    </div>
+                    @if (Model.AllowTransparency)
+                    {
+                        <div class="cp-strip cp-alpha" data-cp-alpha tabindex="0" role="slider" aria-label="Alpha" aria-valuemin="0" aria-valuemax="255">
+                            <div class="cp-alpha-fill" data-cp-alpha-fill></div>
+                            <div class="cp-strip-thumb" data-cp-alpha-thumb></div>
+                        </div>
+                    }
+                </div>
+            }
+
+            @if (hasPalette || showRecent)
+            {
+                <div class="cp-swatch-panel">
+                    <div class="cp-swatch-tabs" role="radiogroup">
+                        @if (hasPalette)
+                        {
+                            <label><input type="radio" name="cp-swatch-tab" value="palette" data-cp-tab checked="@paletteChecked" /> Palette colors</label>
+                        }
+                        @if (showRecent)
+                        {
+                            <label><input type="radio" name="cp-swatch-tab" value="recent" data-cp-tab checked="@recentChecked" /> Recent colors</label>
+                        }
+                    </div>
+
+                    @if (hasPalette)
+                    {
+                        <div class="cp-swatches" data-cp-panel="palette">
+                            @foreach (var swatch in Model.Swatches)
+                            {
+                                // A palette can list "#RRGGBBAA" swatches even when this field has
+                                // transparency off - those are offered (and saved) as plain RGB.
+                                var hex = Model.AllowTransparency ? swatch.Hex : swatch.Hex.Substring(0, 7);
+                                <button type="button" class="@(swatch.Selected ? "cp-swatch cp-selected" : "cp-swatch")"
+                                        data-cp-swatch="@hex" data-cp-name="@swatch.Name"
+                                        title="@swatch.Name (@hex)" aria-label="@swatch.Name (@hex)">
+                                    <span style="background:@hex"></span>
+                                </button>
+                            }
+                        </div>
+                    }
+                    @if (showRecent)
+                    {
+                        <div class="cp-swatches" data-cp-panel="recent" hidden="@(hasPalette ? "hidden" : null)">
+                            <span class="cp-empty" data-cp-recent-empty>Colors you pick will show up here.</span>
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+
+        <div class="cp-right">
+            @if (!paletteOnly)
+            {
+                <div class="cp-fields">
+                    <div class="cp-column">
+                        <label class="cp-row"><span>Red:</span><input type="number" data-cp-input="r" min="0" max="255" step="1" /><i></i></label>
+                        <label class="cp-row"><span>Green:</span><input type="number" data-cp-input="g" min="0" max="255" step="1" /><i></i></label>
+                        <label class="cp-row"><span>Blue:</span><input type="number" data-cp-input="b" min="0" max="255" step="1" /><i></i></label>
+                        <label class="cp-row"><span>Hue:</span><input type="number" data-cp-input="h" min="0" max="359" step="1" /><i>&deg;</i></label>
+                        <label class="cp-row"><span>Saturation:</span><input type="number" data-cp-input="s" min="0" max="100" step="1" /><i>%</i></label>
+                        <label class="cp-row"><span>Brightness:</span><input type="number" data-cp-input="v" min="0" max="100" step="1" /><i>%</i></label>
+                    </div>
+                    <div class="cp-column">
+                        <label class="cp-row"><span>Cyan:</span><input type="number" data-cp-input="c" min="0" max="100" step="0.1" /><i>%</i></label>
+                        <label class="cp-row"><span>Magenta:</span><input type="number" data-cp-input="m" min="0" max="100" step="0.1" /><i>%</i></label>
+                        <label class="cp-row"><span>Yellow:</span><input type="number" data-cp-input="y" min="0" max="100" step="0.1" /><i>%</i></label>
+                        <label class="cp-row"><span>Key:</span><input type="number" data-cp-input="k" min="0" max="100" step="0.1" /><i>%</i></label>
+                        @if (Model.AllowTransparency)
+                        {
+                            <label class="cp-row"><span>Alpha:</span><input type="number" data-cp-input="a" min="0" max="255" step="1" /><i></i></label>
+                        }
+                        <label class="cp-row"><span>Hex:</span><input type="text" class="cp-hex" data-cp-input="hex" maxlength="@(Model.AllowTransparency ? 9 : 7)" spellcheck="false" placeholder="@(Model.AllowTransparency ? "#RRGGBB[AA]" : "#RRGGBB")" /><i></i></label>
+                    </div>
+                </div>
+            }
+
+            <div class="cp-summary">
+                <div class="cp-row cp-name-row"><span>Name:</span><strong data-cp-name-label>&ndash;</strong></div>
+                @if (paletteOnly)
+                {
+                    <div class="cp-row"><span>Hex:</span><strong data-cp-hex-label>&ndash;</strong></div>
+                }
+                <div class="cp-compare">
+                    <div>
+                        <span>New</span>
+                        <div class="cp-chip" data-cp-new title="New color"><span></span></div>
+                    </div>
+                    <div>
+                        <span>Current</span>
+                        <button type="button" class="cp-chip" data-cp-current title="Current color - click to revert"><span></span></button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="cp-actions">
+                @if (!paletteOnly)
+                {
+                    <button type="button" class="scButton cp-action" data-cp-eyedropper title="Pick a color from the screen" hidden>
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.7 5.6 18.4 3.3a1 1 0 0 0-1.4 0l-3.1 3.1-1.9-1.9-1.4 1.4 1.4 1.4L4 15.3V20h4.7l8-8 1.4 1.4 1.4-1.4-1.9-1.9 3.1-3.1a1 1 0 0 0 0-1.4ZM7.9 18H6v-1.9l7.4-7.4 1.9 1.9Z" /></svg>
+                        Eyedropper
+                    </button>
+                }
+                <button type="button" class="scButton cp-action" data-cp-copy title="Copy the hex value">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 1H4a2 2 0 0 0-2 2v14h2V3h12V1Zm3 4H8a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2Zm0 16H8V7h11v14Z" /></svg>
+                    Copy hex
+                </button>
+            </div>
+        </div>
+    </div>
+</div>

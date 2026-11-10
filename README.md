@@ -91,7 +91,8 @@ wizard that scans for and lets you remove everything the module created or touch
 - `bin\SoftConsulting.ColorPicker.dll`
 - `App_Config\Modules\ColorPicker\SoftConsulting.ColorPicker.Fields.config`
 - `App_Config\Modules\ColorPicker\SoftConsulting.ColorPicker.Services.config`
-- `Views\ColorPicker\Field.cshtml`
+- `Views\ColorPicker\Field.cshtml` and `Views\ColorPicker\Dialog.cshtml`
+- `sitecore modules\Shell\ColorPicker\ColorPickerDialog.xml` (+ `.css`/`.js`)
 - `sitecore\admin\ColorPicker\Uninstall.aspx` (+ `.css`/`.js`) and `UninstallApi.ashx`
 - `sitecore modules\items\core\items.core.ColorPicker.dat` and
   `sitecore modules\items\master\items.master.ColorPicker.dat`
@@ -104,6 +105,7 @@ $files = @(
     'App_Config\Modules\ColorPicker',
     'Views\ColorPicker',
     'sitecore\admin\ColorPicker',
+    'sitecore modules\Shell\ColorPicker',
     'sitecore modules\items\core\items.core.ColorPicker.dat',
     'sitecore modules\items\master\items.master.ColorPicker.dat'
 )

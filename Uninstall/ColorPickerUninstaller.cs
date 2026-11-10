@@ -262,6 +262,7 @@ namespace SoftConsulting.ColorPicker.Uninstall
             AddMappedPathIfExists(files, "~/App_Config/Modules/ColorPicker");
             AddMappedPathIfExists(files, "~/Views/ColorPicker");
             AddMappedPathIfExists(files, "~/sitecore/admin/ColorPicker");
+            AddMappedPathIfExists(files, "~/sitecore modules/Shell/ColorPicker");
 
             // Unlike everything above, deleting these two is what actually removes the module's
             // own Sitecore items (the field type, the Palette template, the swatch validator, the

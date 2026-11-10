@@ -127,6 +127,11 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Commands\ClearColor.cs" />
+    <Compile Include="Commands\ColorPickerWebEditCommand.cs" />
+    <Compile Include="Commands\EditColor.cs" />
+    <Compile Include="Dialogs\ColorPickerDialogForm.cs" />
+    <Compile Include="Dialogs\ColorPickerDialogViewModel.cs" />
     <Compile Include="Fields\ColorPicker.cs" />
     <Compile Include="Fields\ColorPickerField.cs" />
     <Compile Include="Fields\ColorPickerSourceParser.cs" />
@@ -135,6 +140,7 @@
     <Compile Include="Infrastructure\ColorPickerServicesConfigurator.cs" />
     <Compile Include="Infrastructure\ContentDatabaseResolver.cs" />
     <Compile Include="Infrastructure\RazorViewRenderer.cs" />
+    <Compile Include="Pipelines\RenderField\RenderColorPickerField.cs" />
     <Compile Include="sitecore\admin\ColorPicker\Uninstall.aspx.cs">
       <SubType>ASPXCodeBehind</SubType>
     </Compile>
@@ -154,7 +160,11 @@
     <Content Include="sitecore\admin\ColorPicker\Uninstall.css" />
     <Content Include="sitecore\admin\ColorPicker\Uninstall.js" />
     <Content Include="sitecore\admin\ColorPicker\UninstallApi.ashx" />
+    <Content Include="Views\ColorPicker\Dialog.cshtml" />
     <Content Include="Views\ColorPicker\Field.cshtml" />
+    <Content Include="sitecore modules\Shell\ColorPicker\ColorPickerDialog.css" />
+    <Content Include="sitecore modules\Shell\ColorPicker\ColorPickerDialog.js" />
+    <Content Include="sitecore modules\Shell\ColorPicker\ColorPickerDialog.xml" />
     <None Include="Views\Web.config" />
     <Content Include="sitecore modules\items\core\items.core.ColorPicker.dat" />
     <Content Include="sitecore modules\items\master\items.master.ColorPicker.dat" />

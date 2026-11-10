@@ -1,0 +1,365 @@
+/*
+  Color picker dialog (ColorPickerDialog.xml + Views/ColorPicker/Dialog.cshtml). Everything is
+  scoped under .cp-dialog so nothing leaks into Sitecore's own dialog chrome.
+*/
+
+/*
+  Keep the dialog header and the OK/Cancel footer always visible: the page itself never scrolls,
+  only FormDialog's content area does (.scDialogContentContainer is already overflow:auto). The
+  min-height lets that flex item shrink below its content instead of pushing the footer out.
+  This stylesheet is only loaded by this dialog's page, so these page-level rules are safe.
+*/
+html,
+body {
+  overflow: hidden !important;
+}
+
+.scFormDialogContent {
+  min-height: 0;
+}
+
+.scFormDialogHeader,
+.scFormDialogFooter {
+  flex-shrink: 0;
+}
+
+.cp-host {
+  min-width: min-content;
+}
+
+.cp-dialog {
+  --cp-border: #b9c0c7;
+  --cp-text: #333;
+  --cp-muted: #707070;
+  --cp-accent: #1e88e5;
+  --cp-checker: #ccc;
+  --cp-spectrum: 256px;
+  --cp-strip: 22px;
+
+  box-sizing: border-box;
+  padding: 8px 4px;
+  color: var(--cp-text);
+  font-size: 12px;
+}
+
+.cp-dialog *,
+.cp-dialog *::before,
+.cp-dialog *::after {
+  box-sizing: border-box;
+}
+
+.cp-dialog [hidden] {
+  display: none !important;
+}
+
+.cp-message {
+  margin: 0 0 12px;
+  color: #b00020;
+}
+
+.cp-layout {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24px;
+  align-items: flex-start;
+}
+
+/* ---- Spectrum ------------------------------------------------------------------------------ */
+
+.cp-spectrum {
+  display: flex;
+  gap: 8px;
+}
+
+.cp-sv {
+  position: relative;
+  width: var(--cp-spectrum);
+  height: var(--cp-spectrum);
+  border: 1px solid var(--cp-border);
+  background: hsl(0, 100%, 50%);
+  cursor: crosshair;
+  touch-action: none;
+  outline: none;
+}
+
+.cp-sv-white,
+.cp-sv-black {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.cp-sv-white {
+  background: linear-gradient(to right, #fff, rgba(255, 255, 255, 0));
+}
+
+.cp-sv-black {
+  background: linear-gradient(to top, #000, rgba(0, 0, 0, 0));
+}
+
+.cp-sv-cursor {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  margin: -7px 0 0 -7px;
+  border: 2px solid #fff;
+  border-radius: 50%;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.6), inset 0 0 0 1px rgba(0, 0, 0, 0.6);
+  pointer-events: none;
+}
+
+.cp-strip {
+  position: relative;
+  width: var(--cp-strip);
+  height: var(--cp-spectrum);
+  border: 1px solid var(--cp-border);
+  cursor: ns-resize;
+  touch-action: none;
+  outline: none;
+}
+
+.cp-hue {
+  background: linear-gradient(to bottom, #f00 0%, #f0f 16.66%, #00f 33.33%, #0ff 50%, #0f0 66.66%, #ff0 83.33%, #f00 100%);
+}
+
+.cp-alpha,
+.cp-chip,
+.cp-swatch {
+  background-color: #fff;
+  background-image:
+    linear-gradient(45deg, var(--cp-checker) 25%, transparent 25%, transparent 75%, var(--cp-checker) 75%),
+    linear-gradient(45deg, var(--cp-checker) 25%, transparent 25%, transparent 75%, var(--cp-checker) 75%);
+  background-size: 8px 8px;
+  background-position: 0 0, 4px 4px;
+}
+
+.cp-alpha-fill {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.cp-strip-thumb {
+  position: absolute;
+  left: -4px;
+  right: -4px;
+  height: 8px;
+  margin-top: -4px;
+  border: 1px solid #000;
+  background: rgba(255, 255, 255, 0.35);
+  box-shadow: 0 0 0 1px #fff;
+  pointer-events: none;
+}
+
+.cp-sv:focus-visible,
+.cp-strip:focus-visible {
+  box-shadow: 0 0 0 2px var(--cp-accent);
+}
+
+/* ---- Swatches -------------------------------------------------------------------------------- */
+
+.cp-swatch-panel {
+  margin-top: 12px;
+  width: calc(var(--cp-spectrum) + (var(--cp-strip) + 8px) * 2);
+}
+
+.cp-palette-only .cp-swatch-panel {
+  margin-top: 0;
+  width: 400px;
+}
+
+.cp-swatch-tabs {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 6px;
+}
+
+.cp-swatch-tabs label {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+}
+
+.cp-swatch-tabs input {
+  margin: 0;
+}
+
+.cp-swatches {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+  max-height: 120px;
+  overflow-y: auto;
+  padding: 2px;
+}
+
+.cp-palette-only .cp-swatches {
+  max-height: 300px;
+  gap: 4px;
+}
+
+.cp-swatch {
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: 1px solid var(--cp-border);
+  cursor: pointer;
+}
+
+.cp-palette-only .cp-swatch {
+  width: 28px;
+  height: 28px;
+}
+
+.cp-swatch span,
+.cp-chip span {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.cp-swatch:hover {
+  border-color: #000;
+}
+
+.cp-swatch.cp-selected {
+  outline: 2px solid var(--cp-accent);
+  outline-offset: 1px;
+}
+
+.cp-swatch:focus-visible {
+  outline: 2px solid var(--cp-accent);
+}
+
+.cp-empty {
+  color: var(--cp-muted);
+  font-style: italic;
+}
+
+/* ---- Value fields ---------------------------------------------------------------------------- */
+
+.cp-right {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
+}
+
+.cp-fields {
+  display: flex;
+  gap: 20px;
+}
+
+.cp-column {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.cp-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  font-weight: normal;
+}
+
+.cp-row > span {
+  width: 72px;
+  flex: none;
+}
+
+.cp-row > i {
+  width: 12px;
+  font-style: normal;
+  color: var(--cp-muted);
+}
+
+.cp-row input {
+  width: 72px;
+  height: 26px;
+  padding: 2px 4px;
+  border: 1px solid var(--cp-border);
+  font: inherit;
+  text-align: right;
+}
+
+.cp-row input.cp-hex {
+  text-transform: uppercase;
+  font-family: Consolas, "Courier New", monospace;
+}
+
+.cp-row input:focus {
+  border-color: var(--cp-accent);
+  outline: none;
+}
+
+.cp-row input.cp-invalid {
+  border-color: #b00020;
+  background: #fdecee;
+}
+
+/* ---- Summary / compare ----------------------------------------------------------------------- */
+
+.cp-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.cp-summary strong {
+  font-weight: 600;
+}
+
+.cp-compare {
+  display: flex;
+  gap: 16px;
+}
+
+.cp-compare > div {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.cp-chip {
+  width: 72px;
+  height: 48px;
+  padding: 0;
+  border: 1px solid var(--cp-border);
+}
+
+button.cp-chip {
+  cursor: pointer;
+}
+
+button.cp-chip:hover {
+  border-color: #000;
+}
+
+.cp-actions {
+  display: flex;
+  gap: 8px;
+}
+
+/*
+  The look (gradient, border, radius, hover/active/focus states) comes from Sitecore's own
+  .scButton in Themes/Standard/Default/Default.css, the same class as the dialog's OK/Cancel
+  buttons. Only the icon + label layout is added here; the margin reset replaces .scButton's
+  margin-left (it relies on :first-of-type, which the hidden eyedropper button breaks) with the
+  flex gap above.
+*/
+.cp-actions .cp-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin: 0;
+}
+
+.cp-actions .cp-action svg {
+  width: 16px;
+  height: 16px;
+  fill: currentColor;
+}
