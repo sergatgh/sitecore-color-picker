@@ -1,15 +1,5 @@
 <?xml version="1.0" encoding="utf-8" ?>
-<!--
-  The Experience Editor's color picker dialog, opened by the Color Picker field's "Edit color"
-  chrome button (SoftConsulting.ColorPicker.Commands.EditColor) as
-  /sitecore/shell/default.aspx?xmlcontrol=SoftConsulting.ColorPicker.Dialog. Sitecore finds this
-  file because the default <controlSources> config scans "/sitecore modules" for XML controls.
-
-  FormDialog supplies the standard dialog chrome (header, OK/Cancel). The picker markup is
-  rendered into PickerHost from Views/ColorPicker/Dialog.cshtml by the code-beside, and
-  ColorPickerDialog.js keeps the picked color in the hidden ColorValue input, which the
-  code-beside reads back when OK is pressed.
--->
+<!-- Found by the default <controlSources>, which scans "/sitecore modules" for XML controls. -->
 <control xmlns:def="Definition" xmlns="http://schemas.sitecore.net/Visual-Studio-Intellisense">
   <SoftConsulting.ColorPicker.Dialog>
     <Stylesheet Src="/sitecore%20modules/Shell/ColorPicker/ColorPickerDialog.css"></Stylesheet>

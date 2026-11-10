@@ -10,11 +10,8 @@ namespace SoftConsulting.ColorPicker.Validators
     using SoftConsulting.ColorPicker.Fields;
 
     /// <summary>
-    /// Field validator that restricts a Color Picker field to only the swatch colors defined in
-    /// the template field's Source - see <see cref="SoftConsulting.ColorPicker.Fields.ColorPickerSourceParser"/>
-    /// for the grammar. When the Source is empty or has no parseable swatches the validator
-    /// passes without error, so attach it only when you want to lock down the palette. Provisioned
-    /// as a validator item via sitecore modules/items/master/items.master.ColorPicker.dat.
+    /// Restricts the value to the swatches in the template field's Source. Passes when Source
+    /// has no swatches.
     /// </summary>
     [Serializable]
     public class SwatchValidator : StandardValidator
@@ -60,11 +57,7 @@ namespace SoftConsulting.ColorPicker.Validators
                 return GetFailedResult(ValidatorResult.Error);
             }
 
-            // When the current Source has transparency disabled, ignore alpha for the comparison
-            // - a field value saved back when Transparency=true was in effect (e.g. a swatch
-            // picked with 50% alpha) must still match its swatch's plain RGB portion once the
-            // template field is reconfigured to Transparency=false, rather than failing
-            // validation for a channel the field no longer edits.
+            // With transparency off, ignore alpha: a value saved while it was on must still match.
             var compareValue = parsedSource.AllowTransparency
                 ? normalizedValue
                 : ColorPickerUtils.GetRgbPortion(normalizedValue);
@@ -87,21 +80,13 @@ namespace SoftConsulting.ColorPicker.Validators
             return GetFailedResult(ValidatorResult.Error);
         }
 
-        // Sitecore creates validator instances via .NET serialization (the SerializationInfo
-        // constructor above) when a validator item is loaded, not through the DI container, so
-        // the parser cannot be constructor-injected here - it is instead pulled from Sitecore's
-        // dependency resolver (ServiceLocator) at the point of use. See
-        // SoftConsulting.ColorPicker.Infrastructure.ColorPickerServicesConfigurator for the
-        // registration.
+        // Validators are created via serialization, so the parser can't be constructor-injected.
         protected virtual IColorPickerSourceParser ColorPickerSourceParser
             => ServiceLocator.ServiceProvider.GetService<IColorPickerSourceParser>() ?? new ColorPickerSourceParser();
 
         protected override ValidatorResult GetMaxValidatorResult()
             => GetFailedResult(ValidatorResult.Error);
 
-        // The field's swatch palette lives in the template field's Source property, not in the
-        // item's field value. GetItem() (BaseValidator) gives us the item being edited; from
-        // there we walk to its template and look up the field definition by FieldID.
         private string GetTemplateFieldSource(Item item)
         {
             if (ID.IsNullOrEmpty(FieldID))

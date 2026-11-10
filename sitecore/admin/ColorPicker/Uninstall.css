@@ -28,8 +28,6 @@ h2 {
     line-height: 1.5;
 }
 
-/* Step progress -------------------------------------------------------- */
-
 .cp-steps {
     display: flex;
     list-style: none;
@@ -59,8 +57,6 @@ h2 {
     color: #1f4d33;
 }
 
-/* Cards / panels --------------------------------------------------------*/
-
 .cp-panel {
     display: none;
     background: #fff;
@@ -80,8 +76,6 @@ h2 {
     align-items: center;
     margin-bottom: 12px;
 }
-
-/* Buttons ---------------------------------------------------------------*/
 
 .cp-btn-wizard {
     background: #3b6fe0;
@@ -128,8 +122,6 @@ button:disabled {
     cursor: default;
 }
 
-/* Table -------------------------------------------------------------- */
-
 .cp-table-wrap {
     overflow-x: auto;
 }
@@ -157,8 +149,6 @@ td.cp-path {
     font-weight: 600;
 }
 
-/* Status pills --------------------------------------------------------- */
-
 .cp-pill {
     display: inline-block;
     border-radius: 999px;
@@ -177,8 +167,6 @@ td.cp-path {
     color: #a5301f;
 }
 
-/* Spinner ---------------------------------------------------------------*/
-
 .cp-spinner {
     display: inline-block;
     width: 14px;
@@ -194,8 +182,6 @@ td.cp-path {
 @keyframes cp-spin {
     to { transform: rotate(360deg); }
 }
-
-/* Error banner ---------------------------------------------------------*/
 
 .cp-banner {
     background: #fff4e5;
@@ -228,8 +214,6 @@ td.cp-path {
     padding: 8px;
     font-size: 12px;
 }
-
-/* Files to remove --------------------------------------------------------*/
 
 #cp-files ul {
     padding-left: 20px;

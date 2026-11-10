@@ -1,26 +1,13 @@
 @model SoftConsulting.ColorPicker.Fields.ColorPickerViewModel
 @*
-    Renders the Color Picker field's markup. Interaction handlers are inlined on each element
-    (no shared <script> block) because the Content Editor injects field markup via innerHTML,
-    which never executes a <script> tag added that way - do not add one here. The script text
-    built by BuildSyncScript/BuildHexChangeScript/BuildAlphaInputScript is written via Html.Raw
-    as raw JS, unlike every other value below which relies on Razor's automatic encoding. Colors
-    are stored as "#RRGGBB"/"#RRGGBBAA" (see ColorPickerUtils.NormalizeHex), and transparency
-    editing (alpha slider, 8-digit hex) is opt-in via the field's Source ("Transparency=true"),
-    and free color picking (native dialog, typed hex) can be turned off with "CustomColor=false".
-    When the user cannot edit the field (Model.ReadOnly), every control is rendered disabled
-    (hex textbox read-only) - "disabled"/"readonly" attributes use Razor's conditional-attribute
-    support, so a null value omits the attribute entirely. The hidden input is never disabled,
-    since a disabled input is dropped from the form post and the value must still round-trip.
+    Handlers are inlined on each element because the Content Editor injects this markup via
+    innerHTML, which never executes <script> tags - do not add one. The hidden input is never
+    disabled: disabled inputs are dropped from the form post.
 *@
 @functions
 {
-    /// <summary>
-    /// Builds inline script that combines an RGB hex expression and an alpha (0-255) expression
-    /// into the final "#RRGGBB"/"#RRGGBBAA" value, writes it to the hidden field, native color
-    /// input, hex textbox and alpha slider, refreshes the preview swatch, then flags the Content
-    /// Editor form as modified.
-    /// </summary>
+    // Combines the RGB and alpha expressions into the final value, writes it to every input,
+    // repaints the preview and marks the Content Editor form as modified.
     private static string BuildSyncScript(string id, string hexExpression, string alphaExpression)
     {
         return string.Format(
@@ -45,9 +32,7 @@
 
     private static string BuildHexChangeScript(string id, bool allowTransparency)
     {
-        // When transparency editing is off, only a 6-digit value is accepted at all (no
-        // "([0-9A-Fa-f]{2})?" alpha suffix in the pattern) and the composed alpha is always the
-        // literal 255, so a pasted 8-digit value can never sneak an alpha channel back in.
+        // With transparency off, only 6 digits are accepted so a pasted alpha can't sneak in.
         var pattern = allowTransparency
             ? "/^#[0-9A-Fa-f]{6}([0-9A-Fa-f]{2})?$/"
             : "/^#[0-9A-Fa-f]{6}$/";
@@ -63,11 +48,7 @@
 
     private static string BuildNativeChangeScript(string id, bool allowTransparency)
     {
-        // Preserve whatever alpha is already stored - the native <input type="color"> cannot
-        // represent alpha at all, so touching it must never silently reset an author's
-        // previously-chosen transparency back to opaque. When transparency editing is off,
-        // alpha is always forced to 255 instead, since there is no way for this field to have
-        // set it to anything else.
+        // The native input has no alpha, so keep the stored one instead of resetting to opaque.
         var alphaExpression = allowTransparency
             ? "(cp_h&&cp_h.value&&cp_h.value.length>=9?parseInt(cp_h.value.substr(7,2),16):255)"
             : "255";
@@ -76,16 +57,11 @@
 
     private static string BuildAlphaInputScript(string id)
     {
-        // Preserve whatever RGB is already stored; only the alpha changes.
         return BuildSyncScript(id, "(cp_h&&cp_h.value?cp_h.value.substr(0,7):'#000000')", "this.value");
     }
 
-    // JS expression (not a statement) that evaluates to a CSS background-image value: the given
-    // color expression painted as a flat gradient layer on top of a checkerboard pattern, so
-    // translucent colors visibly wash over the checkerboard instead of hiding it. Used both for
-    // static server-rendered swatches/preview (via BuildSwatchBackgroundStyle) and to refresh
-    // the live preview from inline JS (via BuildSyncScript) - kept as one JS-expression builder
-    // so the two never drift out of sync.
+    // The color as a flat layer over a checkerboard, so translucency is visible.
+    // Keep in sync with BuildSwatchBackgroundStyle.
     private static string BackgroundImageJsExpression(string colorJsExpression)
     {
         return "'linear-gradient('+" + colorJsExpression + "+','+" + colorJsExpression + "+')," +
@@ -93,8 +69,6 @@
                "linear-gradient(45deg,#ccc 25%,transparent 25%,transparent 75%,#ccc 75%)'";
     }
 
-    // Server-rendered equivalent of BackgroundImageJsExpression, for a literal hex value known
-    // at render time (swatch buttons, the preview's initial paint).
     private static string BuildSwatchBackgroundStyle(string hex)
     {
         return string.Format(
@@ -105,8 +79,6 @@
             hex);
     }
 
-    // Splits a stored value (6- or 8-digit, always normalized/valid by the time it reaches this
-    // view) into its RGB portion for the native color input and swatch/legacy call sites.
     private static string GetRgbPortion(string hex) 
     {
         return string.IsNullOrEmpty(hex) ? "#000000" : hex.Substring(0, 7);
@@ -125,9 +97,6 @@
     <input type="hidden" id="@Model.Id" name="@Model.Id" value="@Model.Value" />
     @if (Model.Swatches.Count == 0 && !Model.AllowCustomColor)
     {
-        // Nothing to pick from: the Source disabled custom colors ("CustomColor=false") without
-        // configuring any palette swatches. The hidden input above is still rendered so the
-        // stored value round-trips untouched instead of being cleared on save.
         <span class="scColorPickerMessage" style="color:#b00020;">
             No colors are available: this field's Source disables custom color picking
             ("CustomColor=false") and defines no palette swatches. Add a Palette to the Source
@@ -141,18 +110,13 @@
             <span class="scColorPickerSwatches" style="display:inline-flex;flex-wrap:wrap;gap:4px;max-width:100%;">
                 @foreach (var swatch in Model.Swatches)
                 {
-                    // A <button>, not an <a>, since anchor tags are prone to being specially
-                    // styled/reset by Content Editor chrome CSS (this is what was silently hiding
-                    // the swatches even though they were rendering with correct inline styles).
+                    // A <button>, not an <a>: Content Editor CSS hides styled anchors.
                     var cssClass = swatch.Selected ? "scColorPickerSwatch scColorPickerSwatchSelected" : "scColorPickerSwatch";
                     var borderStyle = swatch.Selected ? "2px solid #1e88e5" : "1px solid #b9c0c7";
                     var swatchRgb = GetRgbPortion(swatch.Hex);
                     var swatchAlpha = Model.AllowTransparency ? GetAlpha(swatch.Hex).ToString() : "255";
 
-                    // A palette can list an "#RRGGBBAA" swatch even when this field's Source has
-                    // Transparency off - the field just isn't supposed to show/edit alpha in that
-                    // case, so the swatch box itself must be drawn as its plain opaque RGB portion,
-                    // not the checkerboard/translucent rendering.
+                    // With transparency off, "#RRGGBBAA" swatches are drawn opaque.
                     var swatchDisplayHex = Model.AllowTransparency ? swatch.Hex : swatchRgb;
                     <button type="button" class="@cssClass" title="@(swatch.Name) (@swatchDisplayHex)"
                             style="display:inline-block;width:22px;height:22px;padding:0;@(BuildSwatchBackgroundStyle(swatchDisplayHex));border:@borderStyle;@cursorStyle"
@@ -176,9 +140,6 @@
         }
         else
         {
-            // Palette-only ("CustomColor=false"): no native color dialog, and the hex textbox
-            // is a read-only display of the current value - BuildSyncScript still refreshes it
-            // when a swatch is clicked.
             <input type="text" id="@(Model.Id)_hex" class="scColorPickerHex" readonly="readonly"
                    value="@(Model.AllowTransparency ? Model.Value : GetRgbPortion(Model.Value))"
                    title="Pick a color from the palette" style="width:96px;" />
@@ -191,11 +152,6 @@
                    disabled="@disabledAttr"
                    oninput="@Html.Raw(BuildAlphaInputScript(Model.Id))" />
 
-            // The live preview needs some value to paint even when no color has been chosen yet -
-            // fully-transparent black shows as plain checkerboard in that case, same idea as
-            // NativeValue's "#000000" fallback for the native color input. Only rendered when
-            // transparency editing is on - with it off, the hex textbox/native swatch already show
-            // the color, so a second solid preview would be redundant.
             var previewValue = string.IsNullOrEmpty(Model.Value) ? "#00000000" : Model.Value;
             <span id="@(Model.Id)_preview" class="scColorPickerPreview" title="Preview"
                   style="display:inline-block;width:22px;height:22px;border:1px solid #b9c0c7;@(BuildSwatchBackgroundStyle(previewValue))"></span>

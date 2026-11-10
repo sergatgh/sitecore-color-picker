@@ -4,8 +4,6 @@
     var STEP_ORDER = ["welcome", "1", "2", "3", "4"];
     var state = { report: null };
 
-    // ---- low-level helpers -------------------------------------------------
-
     function escapeHtml(value) {
         return String(value == null ? "" : value).replace(/[&<>"']/g, function (c) {
             return { "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&#39;" }[c];
@@ -42,8 +40,6 @@
         });
     }
 
-    // A scan/manifest ("GET") response has no top-level "success" flag to check - it's just
-    // data - so failures there are surfaced as a plain HTTP-status error by apiCall above.
     function withSpinner(button, fn) {
         var spinner = document.createElement("span");
         spinner.className = "cp-spinner";
@@ -96,9 +92,7 @@
         ensureStepData(step);
     }
 
-    // Steps 1-3 share a single "scan" call (state.report carries all three lists), so once any
-    // of them has been scanned there is no need to hit the network again just because a
-    // different step's table hasn't been rendered yet - render it from the cached report instead.
+    // Steps 1-3 share one "scan" result, so reuse the cached report.
     function ensureStepData(step) {
         if (step !== "1" && step !== "2" && step !== "3") {
             return;
@@ -116,8 +110,6 @@
         else if (step === "2") { scanStep2(button); }
         else { scanStep3(button); }
     }
-
-    // ---- table rendering -----------------------------------------------------
 
     function statusPill(state) {
         if (state === "success") {
@@ -157,8 +149,6 @@
         return '<td class="cp-path"><a href="' + escapeHtml(usage.ContentEditorUrl) + '" target="_blank" rel="noopener">' +
             escapeHtml(usage.ItemPath) + "</a></td>";
     }
-
-    // ---- step 1: Color Picker-typed fields -----------------------------------
 
     function scanStep1(button) {
         return withSpinner(button, function () {
@@ -210,8 +200,6 @@
                 .catch(function (err) { showBanner(err.message, err.details); });
         });
     }
-
-    // ---- step 2: swatch-validator references ---------------------------------
 
     function scanStep2(button) {
         return withSpinner(button, function () {
@@ -270,8 +258,6 @@
         });
     }
 
-    // ---- step 3: custom palettes ----------------------------------------------
-
     function scanStep3(button) {
         return withSpinner(button, function () {
             return apiCall("scan").then(function (report) {
@@ -328,8 +314,6 @@
         });
     }
 
-    // ---- step 4: files to remove by hand ---------------------------------------
-
     function scanStep4(button) {
         return withSpinner(button, function () {
             return apiCall("files").then(renderFiles)
@@ -344,8 +328,6 @@
 
         document.getElementById("cp-files").innerHTML = html;
     }
-
-    // ---- wiring -----------------------------------------------------------
 
     function onRowAction(table, handler) {
         table.addEventListener("click", function (e) {

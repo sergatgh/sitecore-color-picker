@@ -15,22 +15,12 @@ namespace SoftConsulting.ColorPicker.Commands
     using Sitecore.Web.UI.WebControls;
 
     /// <summary>
-    /// Base class for the Experience Editor commands behind a Color Picker field's chrome toolbar
-    /// buttons. Mirrors the contract Sitecore's own General Link commands
-    /// (Sitecore.Shell.Applications.WebEdit.Commands.EditLink/ClearLink) use with the Experience
-    /// Editor's client side:
-    /// <list type="bullet">
-    /// <item>The toolbar button's click, <c>chrome:field:editcontrol({"command":"..."})</c>, copies
-    /// the field's current (possibly unsaved) value into the ribbon's "scPlainValue" input and
-    /// posts the command with itemid/language/version/fieldid/controlid parameters.</item>
-    /// <item>The command answers by writing the new rendered HTML and raw value into the
-    /// "scHtmlValue"/"scPlainValue" inputs and calling <c>scSetHtmlValue(controlid, ...)</c>, which
-    /// updates the field on the page and marks the page as modified.</item>
-    /// </list>
-    /// Deliberately derives from the Sitecore.Kernel <see cref="Command"/>, not Sitecore's
-    /// WebEditCommand, so this module does not need to reference Sitecore.ExperienceEditor.dll.
-    /// Must stay [Serializable]: Sheer keeps the command instance between the requests of a
-    /// client pipeline (e.g. while a dialog is open).
+    /// Base class for the Experience Editor field buttons, following the same client contract as
+    /// Sitecore's EditLink/ClearLink: the current value arrives in "scPlainValue", and the
+    /// command answers by filling "scHtmlValue"/"scPlainValue" and calling scSetHtmlValue.
+    /// Derives from <see cref="Command"/> rather than WebEditCommand to avoid a dependency on
+    /// Sitecore.ExperienceEditor.dll. Must stay [Serializable]: Sheer keeps the instance between
+    /// the requests of a client pipeline.
     /// </summary>
     [Serializable]
     public abstract class ColorPickerWebEditCommand : Command
@@ -55,10 +45,7 @@ namespace SoftConsulting.ColorPicker.Commands
             Context.ClientPage.Start(this, "Run", parameters);
         }
 
-        /// <summary>
-        /// The Sheer client pipeline step started by <see cref="Execute"/>; called again on each
-        /// postback of the same pipeline (e.g. when a dialog it opened closes).
-        /// </summary>
+        /// <summary>Called again on each postback of the pipeline (e.g. when a dialog closes).</summary>
         protected abstract void Run(ClientPipelineArgs args);
 
         protected virtual Item GetItem(ClientPipelineArgs args)
@@ -71,10 +58,6 @@ namespace SoftConsulting.ColorPicker.Commands
             return database.GetItem(ID.Parse(args.Parameters["itemid"]), language, version);
         }
 
-        /// <summary>
-        /// Pushes a new value into the field on the page: <paramref name="html"/> is what the
-        /// author sees, <paramref name="plainValue"/> is the raw value that gets saved.
-        /// </summary>
         protected virtual void UpdateField(string controlId, string html, string plainValue)
         {
             Assert.ArgumentNotNullOrEmpty(controlId, "controlId");
@@ -82,8 +65,8 @@ namespace SoftConsulting.ColorPicker.Commands
             SheerResponse.SetAttribute(HtmlValueInputId, "value", html ?? string.Empty);
             SheerResponse.SetAttribute(PlainValueInputId, "value", plainValue ?? string.Empty);
 
-            // The 3rd argument ("clearIfEmpty") is what lets an empty plain value through - without
-            // it scSetHtmlValue treats an empty value as "no plain value" and saves the HTML instead.
+            // Without "clearIfEmpty", scSetHtmlValue treats an empty plain value as missing and
+            // saves the HTML instead.
             var clearIfEmpty = string.IsNullOrEmpty(plainValue) ? "true" : "false";
             SheerResponse.Eval("scSetHtmlValue('" + this.EscapeJsString(controlId) + "', false, " + clearIfEmpty + ")");
         }
@@ -91,12 +74,6 @@ namespace SoftConsulting.ColorPicker.Commands
         protected virtual string EscapeJsString(string value)
             => (value ?? string.Empty).Replace("\\", "\\\\").Replace("'", "\\'");
 
-        /// <summary>
-        /// Renders <paramref name="value"/> exactly the way the field itself renders on the page,
-        /// through the renderField pipeline, so any customization of that pipeline (see
-        /// <see cref="SoftConsulting.ColorPicker.Pipelines.RenderField.RenderColorPickerField"/>)
-        /// is honored after an edit too.
-        /// </summary>
         protected virtual string RenderFieldValue(Item item, string fieldName, string value)
         {
             Assert.ArgumentNotNull(item, "item");
@@ -108,8 +85,7 @@ namespace SoftConsulting.ColorPicker.Commands
                 renderer.OverrideFieldValue(value ?? string.Empty);
                 renderer.DisableWebEditing = true;
 
-                // The Experience Editor posts the name of the site being edited - render in its
-                // context, not the shell's, the same way EditLink does.
+                // Render in the context of the site being edited, not the shell.
                 var siteName = WebUtil.GetFormValue("scSite");
                 var site = string.IsNullOrEmpty(siteName) ? null : SiteContextFactory.GetSiteContext(siteName);
                 if (site == null)
@@ -124,9 +100,6 @@ namespace SoftConsulting.ColorPicker.Commands
             }
         }
 
-        /// <summary>
-        /// The "[No text in field]" placeholder the Experience Editor shows for an empty field.
-        /// </summary>
         protected virtual string GetEmptyFieldText()
         {
             using (new LanguageSwitcher(WebUtil.GetCookieValue("shell", "lang", Context.Language.Name)))

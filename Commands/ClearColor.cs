@@ -4,11 +4,7 @@ namespace SoftConsulting.ColorPicker.Commands
     using Sitecore.Diagnostics;
     using Sitecore.Web.UI.Sheer;
 
-    /// <summary>
-    /// "colorpicker:clear" - the Experience Editor's "Clear color" chrome button. Empties the
-    /// field on the page (it is saved with the rest of the page), the same way the General Link
-    /// field's "Clear" button works.
-    /// </summary>
+    /// <summary>"colorpicker:clear" - the Experience Editor's "Clear color" button.</summary>
     [Serializable]
     public class ClearColor : ColorPickerWebEditCommand
     {

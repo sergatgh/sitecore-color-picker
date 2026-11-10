@@ -10,23 +10,13 @@ namespace SoftConsulting.ColorPicker.Fields
     using SoftConsulting.ColorPicker.Infrastructure;
 
     /// <summary>
-    /// Content Editor field that lets an author pick a color from a configurable swatch
-    /// palette, a native browser color picker, or a typed hex value; the stored value is always
-    /// normalized to "#RRGGBB" (opaque) or "#RRGGBBAA" (with alpha). The palette and an optional
-    /// custom view are driven by the field's Source value - see <see cref="ColorPickerSourceParser"/>
-    /// for the grammar. All markup and script live in Views\ColorPicker\Field.cshtml, rendered
-    /// via <see cref="SoftConsulting.ColorPicker.Infrastructure.RazorViewRenderer"/>; this class
-    /// only builds the <see cref="ColorPickerViewModel"/> handed to it.
+    /// Content Editor control for the Color Picker field. Markup lives in
+    /// Views\ColorPicker\Field.cshtml; Source grammar is described on <see cref="ColorPickerSourceParser"/>.
     /// </summary>
     public class ColorPicker : Text
     {
         protected virtual string DefaultVirtualPath => "~/Views/ColorPicker/Field.cshtml";
 
-        /// <summary>
-        /// The Source value configured on the template field - see
-        /// <see cref="ColorPickerSourceParser"/> for the grammar. Mirrors the pattern used by
-        /// built-in field controls such as Custom.Source / File.Source / Icon.Source.
-        /// </summary>
         public string Source
         {
             get => this.GetViewStateString("Source");
@@ -47,10 +37,7 @@ namespace SoftConsulting.ColorPicker.Fields
             }
             catch (Exception ex)
             {
-                // Never leave the field area completely blank - log the real cause and fall
-                // back to a plain editable textbox carrying the raw value, so authoring can
-                // still continue while the issue gets fixed. This also covers Razor view
-                // compile/render failures, not just C#-side errors.
+                // Fall back to a plain textbox (also on Razor compile errors) so authoring isn't blocked.
                 Sitecore.Diagnostics.Log.Error("ColorPicker field failed to render: " + ex, this);
                 output.Write(
                     "<input type=\"text\" id=\"{0}\" name=\"{0}\" value=\"{1}\"{2} />",
@@ -59,31 +46,18 @@ namespace SoftConsulting.ColorPicker.Fields
             }
         }
 
-        // The Content Editor's Sheer/XML control factory creates this class via reflection
-        // against its parameterless constructor, not through Sitecore's DI container, so the
-        // parser cannot be constructor-injected here the way it is for the resolve="true"
-        // initialize-pipeline processors - it is instead pulled from Sitecore's dependency
-        // resolver (ServiceLocator) at the point of use. See
-        // SoftConsulting.ColorPicker.Infrastructure.ColorPickerServicesConfigurator for the
-        // registration and SoftConsulting.ColorPicker.Validators.SwatchValidator for the same
-        // pattern applied to a validator, which is likewise built outside the container.
+        // The Content Editor creates field controls via reflection, so the parser can't be
+        // constructor-injected and is resolved from the ServiceLocator instead.
         protected virtual IColorPickerSourceParser ColorPickerSourceParser
             => ServiceLocator.ServiceProvider.GetService<IColorPickerSourceParser>() ?? new ColorPickerSourceParser();
 
-        /// <summary>
-        /// Builds the data handed to the rendering view. The rendered hidden input's id/name
-        /// must match this.ID so <see cref="LoadPostData"/> picks the value up like any other
-        /// field.
-        /// </summary>
+        // The view's input id/name must equal this.ID so LoadPostData receives the value.
         protected virtual ColorPickerViewModel BuildViewModel(ColorPickerSourceResult parsedSource)
         {
             var id = this.ID;
             var value = NormalizeHex(this.Value) ?? string.Empty;
 
-            // The native <input type="color"> cannot represent alpha at all (HTML spec
-            // limitation - it only ever accepts/emits 6-digit "#rrggbb"), so it is always fed
-            // just the RGB portion, regardless of whether the field value itself carries an
-            // alpha suffix.
+            // <input type="color"> only supports "#rrggbb", so it never gets the alpha suffix.
             var nativeValue = string.IsNullOrEmpty(value) ? "#000000" : value.Substring(0, 7);
 
             var model = new ColorPickerViewModel
@@ -105,15 +79,10 @@ namespace SoftConsulting.ColorPicker.Fields
             return model;
         }
 
-        // The Content Editor's EditorFormatter sets ReadOnly on the field control whenever the
-        // current user cannot edit the field - no write access to the item, item locked by
-        // another user, field write denied, item protected, read-only database, etc. - so all
-        // of those permission checks are already folded into this one flag.
+        // EditorFormatter already folds all edit-permission checks (access rights, locks,
+        // protected item, read-only database) into ReadOnly.
         protected virtual bool IsReadOnly() => this.ReadOnly || this.Disabled;
 
-        // The Content Editor edits against the content database (typically "master"), so
-        // Palette item references in Source are resolved against it, same as built-in
-        // Source-driven controls (e.g. droptree/droplink) resolve their item paths.
         private Database GetSourceDatabase()
             => Sitecore.Context.ContentDatabase ?? Sitecore.Context.Database;
 

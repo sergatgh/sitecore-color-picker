@@ -12,13 +12,8 @@ namespace SoftConsulting.ColorPicker.Admin
     using SoftConsulting.ColorPicker.Uninstall;
 
     /// <summary>
-    /// JSON API backing sitecore/admin/ColorPicker/Uninstall.js's wizard. Every action maps
-    /// straight onto one <see cref="IColorPickerUsageScanner"/>/<see cref="IColorPickerUninstaller"/>
-    /// member - this class only routes, authenticates, and serializes. Gated by
-    /// <see cref="EnsureAdministrator"/>, and every POST additionally requires the per-page-load
-    /// anti-forgery token the page stores in <c>Session</c> - see <see cref="ValidateToken"/>.
-    /// Implements <see cref="IRequiresSessionState"/> because a plain <see cref="IHttpHandler"/>
-    /// doesn't get <see cref="HttpContext.Session"/> populated otherwise.
+    /// JSON API for the uninstall wizard. POSTs require the anti-forgery token the page stores in
+    /// Session, hence <see cref="IRequiresSessionState"/>.
     /// </summary>
     public class UninstallApiHandler : IHttpHandler, IRequiresSessionState
     {
@@ -107,10 +102,6 @@ namespace SoftConsulting.ColorPicker.Admin
             }
         }
 
-        /// <summary>
-        /// No item/config dependency - just the authenticated Sitecore user's own administrator
-        /// flag, the same gate Sitecore's own admin pages (and ColorPickerUninstallPage) use.
-        /// </summary>
         protected virtual bool EnsureAdministrator(HttpContext context)
         {
             var user = Sitecore.Context.User;

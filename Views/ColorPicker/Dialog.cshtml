@@ -1,15 +1,5 @@
 @model SoftConsulting.ColorPicker.Dialogs.ColorPickerDialogViewModel
-@*
-    Body of the Experience Editor's color picker dialog (ColorPickerDialog.xml). Unlike
-    Field.cshtml this is part of a real page load, not injected via innerHTML, but all behavior
-    still lives in ColorPickerDialog.js, which finds everything below by its data-cp-* attributes
-    and keeps the picked color in the Sheer input named by data-cp-value-input (read back by
-    ColorPickerDialogForm when OK is pressed).
-
-    Modes, driven by the field's Source:
-    - Transparency=true adds the alpha slider and Alpha field, and allows 8-digit values.
-    - CustomColor=false hides the spectrum and value fields: only the palette can be used.
-*@
+@* Behavior lives in ColorPickerDialog.js, which binds to the data-cp-* attributes. *@
 @{
     var hasPalette = Model.Swatches.Count > 0;
     var paletteOnly = !Model.AllowCustomColor;

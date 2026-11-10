@@ -1,13 +1,7 @@
 /*
-  Color picker dialog (ColorPickerDialog.xml + Views/ColorPicker/Dialog.cshtml). Everything is
-  scoped under .cp-dialog so nothing leaks into Sitecore's own dialog chrome.
-*/
-
-/*
-  Keep the dialog header and the OK/Cancel footer always visible: the page itself never scrolls,
-  only FormDialog's content area does (.scDialogContentContainer is already overflow:auto). The
-  min-height lets that flex item shrink below its content instead of pushing the footer out.
-  This stylesheet is only loaded by this dialog's page, so these page-level rules are safe.
+  Only the content area scrolls, so the header and OK/Cancel footer stay visible; min-height
+  lets that flex item shrink instead of pushing the footer out. Safe as page-level rules because
+  only this dialog loads the stylesheet.
 */
 html,
 body {
@@ -63,8 +57,6 @@ body {
   gap: 24px;
   align-items: flex-start;
 }
-
-/* ---- Spectrum ------------------------------------------------------------------------------ */
 
 .cp-spectrum {
   display: flex;
@@ -156,8 +148,6 @@ body {
   box-shadow: 0 0 0 2px var(--cp-accent);
 }
 
-/* ---- Swatches -------------------------------------------------------------------------------- */
-
 .cp-swatch-panel {
   margin-top: 12px;
   width: calc(var(--cp-spectrum) + (var(--cp-strip) + 8px) * 2);
@@ -237,8 +227,6 @@ body {
   font-style: italic;
 }
 
-/* ---- Value fields ---------------------------------------------------------------------------- */
-
 .cp-right {
   display: flex;
   flex-direction: column;
@@ -300,8 +288,6 @@ body {
   background: #fdecee;
 }
 
-/* ---- Summary / compare ----------------------------------------------------------------------- */
-
 .cp-summary {
   display: flex;
   flex-direction: column;
@@ -344,11 +330,8 @@ button.cp-chip:hover {
 }
 
 /*
-  The look (gradient, border, radius, hover/active/focus states) comes from Sitecore's own
-  .scButton in Themes/Standard/Default/Default.css, the same class as the dialog's OK/Cancel
-  buttons. Only the icon + label layout is added here; the margin reset replaces .scButton's
-  margin-left (it relies on :first-of-type, which the hidden eyedropper button breaks) with the
-  flex gap above.
+  Styling comes from Sitecore's .scButton. Its margin-left relies on :first-of-type, which the
+  hidden eyedropper button breaks, so it's replaced by the flex gap.
 */
 .cp-actions .cp-action {
   display: inline-flex;

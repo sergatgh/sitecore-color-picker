@@ -2,31 +2,17 @@ namespace SoftConsulting.ColorPicker.Fields
 {
     using System.Text.RegularExpressions;
 
-    /// <summary>
-    /// Shared hex-color utilities for the Color Picker field type.
-    /// </summary>
     public static class ColorPickerUtils
     {
-        /// <summary>
-        /// Compiled pattern that matches a 6-digit hex color with an optional 2-digit alpha
-        /// suffix and an optional leading "#". Accepts "#RRGGBB", "RRGGBB", "#RRGGBBAA" and
-        /// "RRGGBBAA", case-insensitive.
-        /// </summary>
         public static readonly Regex HexPattern =
             new Regex(@"^#?[0-9A-Fa-f]{6}([0-9A-Fa-f]{2})?$", RegexOptions.Compiled);
 
-        /// <summary>
-        /// Returns true when <paramref name="value"/> is a valid 6- or 8-digit hex color
-        /// ("#RRGGBB"/"RRGGBB" or "#RRGGBBAA"/"RRGGBBAA", case-insensitive).
-        /// </summary>
         public static bool IsValidHex(string value)
             => !string.IsNullOrEmpty(value) && HexPattern.IsMatch(value);
 
         /// <summary>
-        /// Normalizes <paramref name="value"/> to upper-case "#RRGGBB" (opaque) or "#RRGGBBAA"
-        /// (alpha other than fully opaque); an explicit "FF" alpha suffix is stripped so every
-        /// opaque color normalizes the same way regardless of how it was written. Returns null
-        /// when <paramref name="value"/> is null, empty, or not a valid hex color.
+        /// Upper-case "#RRGGBB" or "#RRGGBBAA", or null if invalid. An "FF" alpha is stripped so
+        /// every opaque color has a single canonical form.
         /// </summary>
         public static string NormalizeHex(string value)
         {
@@ -46,12 +32,7 @@ namespace SoftConsulting.ColorPicker.Fields
             return hex;
         }
 
-        /// <summary>
-        /// Returns the 6-digit "#RRGGBB" portion of a normalized 6- or 8-digit hex color,
-        /// discarding any alpha suffix. <paramref name="value"/> is expected to already be
-        /// normalized (e.g. via <see cref="NormalizeHex"/>); returns null for a null/empty
-        /// value.
-        /// </summary>
+        /// <summary>Expects an already normalized value.</summary>
         public static string GetRgbPortion(string value)
             => string.IsNullOrEmpty(value) ? null : value.Substring(0, 7);
     }

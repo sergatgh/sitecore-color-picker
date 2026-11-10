@@ -16,8 +16,6 @@
   var RECENT_MAX = 24;
   var EMPTY_LABEL = '–';
 
-  // ---- Color math ---------------------------------------------------------------------------
-
   function clamp(value, min, max) {
     return Math.min(max, Math.max(min, value));
   }
@@ -104,8 +102,6 @@
     return Math.round(n * 10) / 10;
   }
 
-  // ---- Browser storage (best effort: may be blocked or unavailable) ---------------------------
-
   function loadRecent() {
     try {
       var raw = window.localStorage.getItem(RECENT_STORAGE_KEY);
@@ -122,8 +118,6 @@
       // Ignore - recent colors are a convenience only.
     }
   }
-
-  // ---- Picker -------------------------------------------------------------------------------
 
   function Picker(root) {
     var self = this;
@@ -276,8 +270,6 @@
     el.style.background = color ? cssColor(color, color.a) : 'transparent';
   };
 
-  // ---- Spectrum interaction -----------------------------------------------------------------
-
   Picker.prototype.bindSpectrum = function () {
     var self = this;
 
@@ -354,8 +346,6 @@
     });
   };
 
-  // ---- Value fields -------------------------------------------------------------------------
-
   Picker.prototype.bindInputs = function () {
     var self = this;
 
@@ -421,8 +411,6 @@
     this.hasColor = true;
     return true;
   };
-
-  // ---- Swatches & recent colors -------------------------------------------------------------
 
   Picker.prototype.bindSwatches = function () {
     var self = this;
@@ -497,8 +485,6 @@
     storeRecent(list.slice(0, RECENT_MAX));
   };
 
-  // ---- Eyedropper & copy --------------------------------------------------------------------
-
   Picker.prototype.bindActions = function () {
     var self = this;
 
@@ -557,28 +543,12 @@
     }
   };
 
-  // ---- Fit the dialog frame to its content and the visible window ----------------------------
-  //
-  // Sitecore's modal host (jQueryModalDialogs.html) opens the dialog at the fixed size the
-  // command requested. That size is only a first guess: the content's real height depends on the
-  // field's Source (transparency, palette-only mode, palette size) and on the swatch tab shown,
-  // so a fixed height leaves either an empty band above the buttons or a needless scrollbar. And
-  // the host only shrinks a dialog when BOTH dimensions exceed 80% of the window, so on a
-  // zoomed-in page the frame easily ends up taller than the window, pushing OK/Cancel out of
-  // view behind the outer page's scrollbar.
-  //
-  // So the frame is sized to exactly what the content needs, capped by the window - on load,
-  // whenever the content's size changes, and whenever the window is resized (zooming triggers
-  // that too):
-  // - Width: the layout first gets the full available width (the requested width, capped by the
-  //   window) so its two columns sit side by side whenever they fit, then the frame shrinks to
-  //   the width the layout actually uses - just the spectrum column once the value fields have
-  //   wrapped underneath it on a zoomed-in page.
-  // - Height: what the content needs at that width, capped by the window.
-  // Sizes are measured, not assumed: after each resize the frame is checked and corrected, so the
-  // host's own title bar/borders can't leave a needless scrollbar. Inside the frame only the
-  // content area scrolls (see ColorPickerDialog.css), so the header and the OK/Cancel footer
-  // always stay visible.
+  // Sitecore's modal host opens the dialog at a fixed size, but the content height depends on
+  // the Source, and the host only shrinks a dialog when BOTH dimensions exceed 80% of the window,
+  // so on a zoomed page OK/Cancel can end up off-screen. The frame is therefore re-fitted to the
+  // content, capped by the window, on load, on content resize and on window resize: first given
+  // the full width so the columns sit side by side if they fit, then shrunk to the width used.
+  // Sizes are measured and corrected after each resize rather than assumed.
 
   var FIT_MARGIN = 40;
   var FIT_MIN_WIDTH = 320;
@@ -726,8 +696,6 @@
       // Best effort only - the dialog still works at its original size.
     }
   };
-
-  // ---- Bootstrap ----------------------------------------------------------------------------
 
   function init() {
     var root = document.querySelector('[data-cp-root]');

@@ -9,17 +9,12 @@ namespace SoftConsulting.ColorPicker.Infrastructure
     {
         Database GetContentDatabase();
 
-        /// <summary>
-        /// Every content database this module should scan for usage - at minimum
-        /// <see cref="GetContentDatabase"/>'s result.
-        /// </summary>
         IEnumerable<Database> GetContentDatabases();
     }
 
     /// <summary>
-    /// Resolves the database content editors author in (typically "master"), via the "shell"
-    /// site's contentDatabase setting rather than a hardcoded name, so this keeps working on
-    /// instances that rename or repoint their authoring database.
+    /// Reads the "shell" site's contentDatabase rather than hardcoding "master", so a renamed
+    /// authoring database still works.
     /// </summary>
     public class ContentDatabaseResolver : IContentDatabaseResolver
     {
@@ -44,11 +39,9 @@ namespace SoftConsulting.ColorPicker.Infrastructure
         }
 
         /// <summary>
-        /// Deliberately does not default to "every database Sitecore knows about minus core" -
-        /// there is no reliable way to tell an authoring database from a publishing target (e.g.
-        /// "web") by name alone, and scanning one would double-report usage findings. Instances
-        /// with more than one real content database should override
-        /// <see cref="GetAdditionalContentDatabaseNames"/> via their own subclass.
+        /// Doesn't scan "all databases but core": publishing targets like "web" can't be told apart
+        /// by name and would double-report usage. Override
+        /// <see cref="GetAdditionalContentDatabaseNames"/> to add more.
         /// </summary>
         public virtual IEnumerable<Database> GetContentDatabases()
         {
@@ -73,11 +66,6 @@ namespace SoftConsulting.ColorPicker.Infrastructure
             }
         }
 
-        /// <summary>
-        /// No additional content databases by default - override to name more (e.g. a second
-        /// tenant's authoring database) on instances where <see cref="GetContentDatabase"/>
-        /// alone does not cover every place this module's items and fields might live.
-        /// </summary>
         protected virtual IEnumerable<string> GetAdditionalContentDatabaseNames() => new string[0];
     }
 }

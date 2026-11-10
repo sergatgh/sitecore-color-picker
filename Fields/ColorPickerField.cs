@@ -5,18 +5,11 @@ namespace SoftConsulting.ColorPicker.Fields
     using Sitecore.Data.Fields;
 
     /// <summary>
-    /// Data-API wrapper for the "Color Picker" field type, used to read and write color field
-    /// values on Sitecore items the same way TextField wraps single-line text (e.g.
-    /// <c>ColorPickerField color = item.Fields["Background Color"];</c>). Values are stored and
-    /// returned as upper-case "#RRGGBB" (opaque) or "#RRGGBBAA" (with alpha) - see <see cref="A"/>/
-    /// <see cref="IsOpaque"/>/<see cref="SetFromRgba"/>.
+    /// Data-API wrapper for the "Color Picker" field type. Values are stored as upper-case
+    /// "#RRGGBB" or "#RRGGBBAA".
     /// </summary>
     public class ColorPickerField : CustomField
     {
-        // -----------------------------------------------------------------------
-        // Construction & implicit cast
-        // -----------------------------------------------------------------------
-
         public ColorPickerField(Field innerField)
             : base(innerField)
         {
@@ -25,85 +18,44 @@ namespace SoftConsulting.ColorPicker.Fields
         public static implicit operator ColorPickerField(Field field)
             => field != null ? new ColorPickerField(field) : null;
 
-        // -----------------------------------------------------------------------
-        // Value — normalise on every write via the protected virtual pair
-        // -----------------------------------------------------------------------
-
-        /// <summary>
-        /// Normalizes the value to upper-case "#RRGGBB" or "#RRGGBBAA" before persisting.
-        /// Null, empty, or invalid hex strings clear the field.
-        /// </summary>
+        /// <summary>Invalid hex strings clear the field.</summary>
         protected override void SetValue(string value)
             => InnerField.Value = NormalizeHex(value) ?? string.Empty;
 
-        // GetValue() is intentionally not overridden: the base returns InnerField.Value
-        // directly, and every write already stores a normalized value, so reads are free.
+        // GetValue() is not overridden: every write already stores a normalized value.
 
-        // -----------------------------------------------------------------------
-        // Component properties
-        // -----------------------------------------------------------------------
-
-        /// <summary>True when no color has been stored (field value is null or empty).</summary>
         public bool IsEmpty => string.IsNullOrEmpty(InnerField.Value);
 
-        /// <summary>Red channel, 0–255. Returns 0 when <see cref="IsEmpty"/>.</summary>
         public byte R => IsEmpty ? (byte)0 : Convert.ToByte(InnerField.Value.Substring(1, 2), 16);
 
-        /// <summary>Green channel, 0–255. Returns 0 when <see cref="IsEmpty"/>.</summary>
         public byte G => IsEmpty ? (byte)0 : Convert.ToByte(InnerField.Value.Substring(3, 2), 16);
 
-        /// <summary>Blue channel, 0–255. Returns 0 when <see cref="IsEmpty"/>.</summary>
         public byte B => IsEmpty ? (byte)0 : Convert.ToByte(InnerField.Value.Substring(5, 2), 16);
 
-        /// <summary>
-        /// Alpha channel, 0–255. 255 (fully opaque) when the stored value has no alpha suffix,
-        /// or when <see cref="IsEmpty"/>.
-        /// </summary>
+        /// <summary>255 when the value has no alpha suffix.</summary>
         public virtual byte A => IsEmpty || InnerField.Value.Length < 9
             ? (byte)255
             : Convert.ToByte(InnerField.Value.Substring(7, 2), 16);
 
-        /// <summary>True when the stored color has no alpha suffix, i.e. <see cref="A"/> == 255.</summary>
         public virtual bool IsOpaque => A == 255;
 
-        // -----------------------------------------------------------------------
-        // Conversion — read
-        // -----------------------------------------------------------------------
-
-        /// <summary>
-        /// Returns the stored color as a <see cref="System.Drawing.Color"/>, honoring alpha.
-        /// Returns <see cref="Color.Empty"/> when <see cref="IsEmpty"/>.
-        /// </summary>
         public virtual Color ToRgb()
             => IsEmpty ? Color.Empty : Color.FromArgb(A, R, G, B);
 
         /// <summary>
-        /// Returns the 32-bit ARGB value (0xAARRGGBB), e.g. a 50%-alpha orange becomes
-        /// 0x80FF5A00. Returned as <see cref="long"/> rather than <see cref="int"/> so the alpha
-        /// byte can exceed 0x7F without sign-bit ambiguity. Returns 0 when <see cref="IsEmpty"/>.
+        /// 0xAARRGGBB. A <see cref="long"/> so an alpha above 0x7F doesn't make it negative.
         /// </summary>
         public virtual long ToArgb()
             => IsEmpty ? 0 : ((long)A << 24) | (uint)((R << 16) | (G << 8) | B);
 
-        /// <summary>
-        /// Returns the stored "#RRGGBB" or "#RRGGBBAA" string. Equivalent to reading
-        /// <see cref="CustomField.Value"/>. Returns an empty string when <see cref="IsEmpty"/>.
-        /// </summary>
         public string ToHex()
             => InnerField.Value;
 
-        /// <summary>
-        /// Returns the 24-bit decimal integer (e.g. #FF5A00 → 16734720). RGB-only - alpha is
-        /// silently dropped, so use <see cref="ToArgb"/> when it matters. Returns 0 when
-        /// <see cref="IsEmpty"/>.
-        /// </summary>
+        /// <summary>24-bit RGB value; alpha is dropped (use <see cref="ToArgb"/> to keep it).</summary>
         public int ToDecimal()
             => IsEmpty ? 0 : (R << 16) | (G << 8) | B;
 
-        /// <summary>
-        /// Converts to CMYK. All four components are in [0, 1].
-        /// Returns (0, 0, 0, 1) — black — when <see cref="IsEmpty"/>.
-        /// </summary>
+        /// <summary>Components in [0, 1]; black when empty.</summary>
         public (double C, double M, double Y, double K) ToCmyk()
         {
             if (IsEmpty)
@@ -131,10 +83,7 @@ namespace SoftConsulting.ColorPicker.Fields
             );
         }
 
-        /// <summary>
-        /// Converts to HSB (= HSV). H is in [0, 360); S and B are in [0, 1].
-        /// Returns (0, 0, 0) when <see cref="IsEmpty"/>.
-        /// </summary>
+        /// <summary>HSV. H in [0, 360); S and B in [0, 1].</summary>
         public (double H, double S, double B) ToHsb()
         {
             if (IsEmpty)
@@ -157,10 +106,7 @@ namespace SoftConsulting.ColorPicker.Fields
             );
         }
 
-        /// <summary>
-        /// Converts to HSL. H is in [0, 360); S and L are in [0, 1].
-        /// Returns (0, 0, 0) when <see cref="IsEmpty"/>.
-        /// </summary>
+        /// <summary>H in [0, 360); S and L in [0, 1].</summary>
         public (double H, double S, double L) ToHsl()
         {
             if (IsEmpty)
@@ -184,14 +130,6 @@ namespace SoftConsulting.ColorPicker.Fields
             );
         }
 
-        // -----------------------------------------------------------------------
-        // Conversion — write
-        // -----------------------------------------------------------------------
-
-        /// <summary>
-        /// Sets the field value from individual RGB byte components (each in [0, 255]).
-        /// </summary>
-        /// <exception cref="ArgumentOutOfRangeException">Any component is outside [0, 255].</exception>
         public void SetFromRgb(int r, int g, int b)
         {
             ValidateComponent(r, nameof(r));
@@ -200,12 +138,7 @@ namespace SoftConsulting.ColorPicker.Fields
             InnerField.Value = $"#{r:X2}{g:X2}{b:X2}";
         }
 
-        /// <summary>
-        /// Sets the field value from individual RGBA byte components (each in [0, 255]).
-        /// Stores the 6-digit opaque form when <paramref name="a"/> is 255, otherwise the
-        /// 8-digit "#RRGGBBAA" form.
-        /// </summary>
-        /// <exception cref="ArgumentOutOfRangeException">Any component is outside [0, 255].</exception>
+        /// <summary>Stores the 6-digit form when <paramref name="a"/> is 255.</summary>
         public virtual void SetFromRgba(int r, int g, int b, int a)
         {
             ValidateComponent(a, nameof(a));
@@ -221,11 +154,6 @@ namespace SoftConsulting.ColorPicker.Fields
             InnerField.Value = $"#{r:X2}{g:X2}{b:X2}{a:X2}";
         }
 
-        /// <summary>
-        /// Validates and normalizes a hex string ("#RRGGBB"/"RRGGBB" or "#RRGGBBAA"/"RRGGBBAA",
-        /// case-insensitive) then stores it as the field value.
-        /// </summary>
-        /// <exception cref="ArgumentException"><paramref name="hex"/> is not a valid hex color.</exception>
         public void SetFromHex(string hex)
         {
             var normalized = NormalizeHex(hex);
@@ -238,12 +166,6 @@ namespace SoftConsulting.ColorPicker.Fields
             InnerField.Value = normalized;
         }
 
-        /// <summary>
-        /// Sets the field value from a 24-bit integer (e.g. 0xFF5A00 stores "#FF5A00").
-        /// RGB-only - there is no alpha-aware overload of this accessor; use
-        /// <see cref="SetFromRgba"/> when alpha matters.
-        /// </summary>
-        /// <exception cref="ArgumentOutOfRangeException"><paramref name="colorValue"/> is outside [0, 0xFFFFFF].</exception>
         public void SetFromDecimal(int colorValue)
         {
             if (colorValue < 0 || colorValue > 0xFFFFFF)
@@ -258,33 +180,22 @@ namespace SoftConsulting.ColorPicker.Fields
                  colorValue        & 0xFF);
         }
 
-        /// <summary>
-        /// Converts HSB (= HSV) to RGB and stores the result.
-        /// H must be in [0, 360); S and <paramref name="brightness"/> must be in [0, 1].
-        /// </summary>
+        /// <summary>HSV. H in [0, 360); S and <paramref name="brightness"/> in [0, 1].</summary>
         public void SetFromHsb(double h, double s, double brightness)
         {
             var (r, g, b) = HsbToRgb(h, s, brightness);
             SetFromRgb(r, g, b);
         }
 
-        /// <summary>
-        /// Converts HSL to RGB and stores the result.
-        /// H must be in [0, 360); S and L must be in [0, 1].
-        /// </summary>
+        /// <summary>H in [0, 360); S and L in [0, 1].</summary>
         public void SetFromHsl(double h, double s, double l)
         {
             var (r, g, b) = HslToRgb(h, s, l);
             SetFromRgb(r, g, b);
         }
 
-        // -----------------------------------------------------------------------
-        // Private helpers
-        // -----------------------------------------------------------------------
-
         private static string NormalizeHex(string value) => ColorPickerUtils.NormalizeHex(value);
 
-        // Shared hue calculation used by ToHsb and ToHsl. Returns H in [0, 360).
         private static double ComputeHue(double r, double g, double b, double cMax, double delta)
         {
             if (delta < double.Epsilon)
@@ -325,7 +236,6 @@ namespace SoftConsulting.ColorPicker.Fields
             return HueSectorToRgb(h, c, x, m);
         }
 
-        // Shared sector → (R,G,B) mapping used by both HsbToRgb and HslToRgb.
         private static (int r, int g, int b) HueSectorToRgb(double h, double c, double x, double m)
         {
             double r1, g1, b1;

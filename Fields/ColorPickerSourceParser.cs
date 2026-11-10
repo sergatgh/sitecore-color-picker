@@ -15,14 +15,9 @@ namespace SoftConsulting.ColorPicker.Fields
     }
 
     /// <summary>
-    /// Parses a Color Picker field's Source value into a merged swatch palette plus an optional
-    /// custom view override. Source is pipe-separated "Key=Value" segments: repeatable "Palette"
-    /// entries (an item path/ID, or an inline "Name:RRGGBB;..." list) merge into one swatch
-    /// list, "View" overrides the rendering view, "Transparency=true" opts into alpha
-    /// editing, and "CustomColor=false" restricts the field to the palette swatches only (no
-    /// native color dialog or typed hex entry); a bare Source with neither '|' nor '=' is treated as a single Palette value.
-    /// Malformed or unresolvable pieces (a missing Palette item, an unparsable color, an
-    /// ambiguous name) are skipped individually rather than failing the whole Source.
+    /// Source grammar: pipe-separated "Key=Value" segments - repeatable "Palette" (item path/ID
+    /// or inline "Name:RRGGBB;..."), "View", "Transparency", "CustomColor". A Source with
+    /// neither '|' nor '=' is a single Palette value. Invalid pieces are skipped individually.
     /// </summary>
     public class ColorPickerSourceParser : IColorPickerSourceParser
     {
@@ -116,8 +111,6 @@ namespace SoftConsulting.ColorPicker.Fields
             AppendCustomColorList(value, swatches);
         }
 
-        // Item paths ("/sitecore/...") and IDs ("{GUID}") are the only two shapes a Palette
-        // value can resolve to an item as; anything else is treated as an inline color list.
         protected virtual bool LooksLikeItemReference(string value)
             => value[0] == '/' || value[0] == '{';
 
@@ -136,16 +129,11 @@ namespace SoftConsulting.ColorPicker.Fields
             return database.GetItem(value);
         }
 
-        // The "Colors" field on a Palette item is a "Name Value List" field, stored as a
-        // URL-encoded "Name1=Value1&Name2=Value2" query string - not the semicolon/colon syntax
-        // AppendCustomColorList understands. NameValueListFieldReader parses it properly (the
-        // same way Sitecore's own field editor does), and this converts the resulting
-        // name/color pairs into that semicolon/colon syntax so they can be fed straight into
-        // AppendCustomColorList and get the same hex validation/normalization as any other
-        // custom color list.
+        // Converts the URL-encoded Name Value List into the inline "[Name]:RRGGBB;..." syntax so
+        // it goes through the same validation as an inline list. Names are bracketed because
+        // they may contain ':'.
         protected virtual string BuildColorListFromNameValueListField(Item item)
         {
-
             var field = item?.Fields[PaletteColorsFieldName];
             var collection = field == null ? new NameValueCollection() : new NameValueListField(field).NameValues;
             if (collection.Count == 0)
@@ -202,15 +190,9 @@ namespace SoftConsulting.ColorPicker.Fields
             }
         }
 
-        // Accepts the same boolean spellings Sitecore Source strings commonly use: "true"/"false"
-        // (any case, via bool.TryParse) as well as the bare "1" checkbox-field convention. Any
-        // other spelling (including an empty/unrecognized value) is treated as "false", keeping
-        // transparency opt-in by default.
         protected virtual bool ParseBoolean(string value) => ParseBoolean(value, false);
 
-        // Same spellings as above, plus the bare "0" checkbox-field convention for "false"; any
-        // other spelling falls back to defaultValue, so an opt-out flag (e.g. CustomColor) is only
-        // turned off by an explicit "false"/"0", never by a typo.
+        // Unrecognized spellings fall back to defaultValue, so a typo never flips a flag.
         protected virtual bool ParseBoolean(string value, bool defaultValue)
         {
             if (bool.TryParse(value, out var flag))
@@ -231,8 +213,6 @@ namespace SoftConsulting.ColorPicker.Fields
             return defaultValue;
         }
 
-        // Splits one "Name:RRGGBB" (or "[Name]:RRGGBB") entry. Returns false for anything
-        // malformed or ambiguous, which the caller treats as "skip this entry".
         protected virtual bool TryParseColorEntry(string entry, out string name, out string hex)
         {
             name = null;
@@ -257,9 +237,7 @@ namespace SoftConsulting.ColorPicker.Fields
                 return true;
             }
 
-            // Unbracketed: exactly one ':' is required - zero means there is no color half, and
-            // more than one means the name itself contains ':', which is only unambiguous when
-            // bracketed (see class docs).
+            // An unbracketed name can't contain ':', so anything but exactly one ':' is invalid.
             var parts = entry.Split(':');
             if (parts.Length != 2)
             {
@@ -272,26 +250,14 @@ namespace SoftConsulting.ColorPicker.Fields
         }
     }
 
-    /// <summary>
-    /// Result of parsing a Color Picker field's Source value: the merged swatch palette and an
-    /// optional custom view path. See <see cref="ColorPickerSourceParser"/> for the grammar.
-    /// </summary>
     public class ColorPickerSourceResult
     {
         public List<ColorPickerSwatchViewModel> Swatches { get; } = new List<ColorPickerSwatchViewModel>();
 
         public string ViewPath { get; set; }
 
-        /// <summary>
-        /// Whether the field's Source opted into transparency editing via "Transparency=true".
-        /// Defaults to false - a plain opaque color picker, no alpha slider or 8-digit hex entry.
-        /// </summary>
         public bool AllowTransparency { get; set; }
 
-        /// <summary>
-        /// Whether free color picking (native color dialog, typed hex entry) is allowed. Defaults
-        /// to true; "CustomColor=false" restricts the field to the palette swatches only.
-        /// </summary>
         public bool AllowCustomColor { get; set; } = true;
     }
 }

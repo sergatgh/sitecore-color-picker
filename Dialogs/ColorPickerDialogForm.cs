@@ -19,13 +19,8 @@ namespace SoftConsulting.ColorPicker.Dialogs
     using SoftConsulting.ColorPicker.Infrastructure;
 
     /// <summary>
-    /// Code-beside of the "SoftConsulting.ColorPicker.Dialog" Sheer XML control
-    /// (sitecore modules\Shell\ColorPicker\ColorPickerDialog.xml) - the color picker dialog the
-    /// Experience Editor's "Edit color" button opens (see
-    /// <see cref="SoftConsulting.ColorPicker.Commands.EditColor"/>). The picker itself is plain
-    /// HTML rendered from Views\ColorPicker\Dialog.cshtml and driven entirely client side by
-    /// ColorPickerDialog.js, which keeps the picked color in the hidden <see cref="ColorValue"/>
-    /// input; this class only renders it, then validates and returns that value on OK.
+    /// Code-beside of ColorPickerDialog.xml. The picker runs client side (ColorPickerDialog.js)
+    /// and writes the picked color into <see cref="ColorValue"/>; this class validates it on OK.
     /// </summary>
     public class ColorPickerDialogForm : DialogForm
     {
@@ -40,8 +35,7 @@ namespace SoftConsulting.ColorPicker.Dialogs
 
         protected virtual string DialogViewPath => "~/Views/ColorPicker/Dialog.cshtml";
 
-        // Sheer creates this form via reflection, outside Sitecore's DI container - see the
-        // matching comment on SoftConsulting.ColorPicker.Fields.ColorPicker.
+        // Sheer creates this form via reflection, so the parser can't be constructor-injected.
         protected virtual IColorPickerSourceParser ColorPickerSourceParser
             => ServiceLocator.ServiceProvider.GetService<IColorPickerSourceParser>() ?? new ColorPickerSourceParser();
 
@@ -55,8 +49,7 @@ namespace SoftConsulting.ColorPicker.Dialogs
                 return;
             }
 
-            // Read once: the handle is removed from the session as soon as it's read, so anything
-            // OnOK needs later is kept in ServerProperties instead.
+            // The handle is removed from the session once read, so what OnOK needs goes to ServerProperties.
             var handle = UrlHandle.Get();
             var parsedSource = this.ColorPickerSourceParser.Parse(handle["source"], this.GetSourceDatabase(handle["database"]));
             var model = this.BuildViewModel(handle["value"], parsedSource);
@@ -128,10 +121,6 @@ namespace SoftConsulting.ColorPicker.Dialogs
             }
         }
 
-        /// <summary>
-        /// Whether <paramref name="value"/> (already normalized) may be saved: any color, unless
-        /// the field's Source restricts it to its palette ("CustomColor=false").
-        /// </summary>
         protected virtual bool IsAllowedColor(string value)
         {
             var allowCustomColor = this.ServerProperties[AllowCustomColorKey] as bool? ?? true;
@@ -145,17 +134,10 @@ namespace SoftConsulting.ColorPicker.Dialogs
             return palette.Contains(value, StringComparer.OrdinalIgnoreCase);
         }
 
-        /// <summary>
-        /// The form a color is stored in for this field: with transparency off, any alpha suffix
-        /// is dropped (a palette may still list "#RRGGBBAA" swatches).
-        /// </summary>
+        // With transparency off the alpha is dropped, even from "#RRGGBBAA" palette swatches.
         protected virtual string ToFieldColor(string hex, bool allowTransparency)
             => allowTransparency ? hex : ColorPickerUtils.GetRgbPortion(hex);
 
-        /// <summary>
-        /// Palette item references in Source resolve against the database of the item being
-        /// edited (passed by the command), falling back to the content database.
-        /// </summary>
         protected virtual Database GetSourceDatabase(string databaseName)
         {
             var database = string.IsNullOrEmpty(databaseName) ? null : Factory.GetDatabase(databaseName, false);

@@ -4,13 +4,8 @@ namespace SoftConsulting.ColorPicker.Admin
     using System.Web.UI;
 
     /// <summary>
-    /// Admin page at /sitecore/admin/ColorPicker/Uninstall.aspx - a static wizard shell driven
-    /// entirely by AJAX calls into UninstallApi.ashx. This code-behind only gates access to
-    /// authenticated Sitecore administrators (<see cref="EnsureAdministrator"/>) and hands the
-    /// page a one-time anti-forgery token (<see cref="TokenSessionKey"/>) for its JS to send back
-    /// on every mutating API call. It depends on no Sitecore item, so it can never end up "half
-    /// removed" and deliberately never tries to delete itself - see
-    /// <see cref="Uninstall.IColorPickerUninstaller.GetManualCleanupFiles"/>'s remarks.
+    /// Wizard shell driven by UninstallApi.ashx. Depends on no Sitecore item, so it can't end up
+    /// half-removed, and never deletes itself.
     /// </summary>
     public class ColorPickerUninstallPage : Page
     {
@@ -34,10 +29,6 @@ namespace SoftConsulting.ColorPicker.Admin
             Session[TokenSessionKey] = Token;
         }
 
-        /// <summary>
-        /// No item/config dependency - just the authenticated Sitecore user's own administrator
-        /// flag, the same gate Sitecore's own admin pages use.
-        /// </summary>
         protected virtual bool EnsureAdministrator()
         {
             var user = Sitecore.Context.User;
