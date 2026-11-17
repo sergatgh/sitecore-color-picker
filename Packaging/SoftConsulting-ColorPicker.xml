@@ -1,0 +1,180 @@
+<project>
+  <Metadata>
+    <metadata>
+      <PackageName>SoftConsulting-ColorPicker</PackageName>
+      <Author>Sergey Solomentsev</Author>
+      <Version>1.1.0.0</Version>
+      <Revision />
+      <License>Apache License 2.0</License>
+      <Comment>Color Picker field type for the Sitecore Content Editor and Experience Editor. Supports Sitecore XP 10.1+.</Comment>
+      <Attributes />
+      <Readme>Adds the "Color Picker" field type, the Palette template with two sample palettes, and the swatch and color distance validators.
+
+Items are delivered as item resource files (.dat), so the Sitecore application restarts after installation.
+
+To uninstall, open /sitecore/admin/ColorPicker/Uninstall.aspx as an administrator.
+
+Documentation: https://github.com/sergatgh/sitecore-color-picker</Readme>
+      <Publisher>Soft Consulting US LLC</Publisher>
+      <PostStep />
+      <PackageID>SoftConsulting.ColorPicker</PackageID>
+    </metadata>
+  </Metadata>
+  <SaveProject>True</SaveProject>
+  <Sources>
+    <xfiles>
+      <Entries>
+        <x-item>/bin/SoftConsulting.ColorPicker.dll</x-item>
+      </Entries>
+      <Converter>
+        <FileToEntryConverter>
+          <Root>/</Root>
+          <Transforms>
+            <InstallerConfigurationTransform>
+              <Options>
+                <BehaviourOptions>
+                  <ItemMode>Overwrite</ItemMode>
+                  <ItemMergeMode>Undefined</ItemMergeMode>
+                </BehaviourOptions>
+              </Options>
+            </InstallerConfigurationTransform>
+          </Transforms>
+        </FileToEntryConverter>
+      </Converter>
+      <Include />
+      <Exclude />
+      <Name>Assemblies</Name>
+    </xfiles>
+    <xfiles>
+      <Entries>
+        <x-item>/App_Config/Modules/ColorPicker/SoftConsulting.ColorPicker.Fields.config</x-item>
+        <x-item>/App_Config/Modules/ColorPicker/SoftConsulting.ColorPicker.Services.config</x-item>
+      </Entries>
+      <Converter>
+        <FileToEntryConverter>
+          <Root>/</Root>
+          <Transforms>
+            <InstallerConfigurationTransform>
+              <Options>
+                <BehaviourOptions>
+                  <ItemMode>Overwrite</ItemMode>
+                  <ItemMergeMode>Undefined</ItemMergeMode>
+                </BehaviourOptions>
+              </Options>
+            </InstallerConfigurationTransform>
+          </Transforms>
+        </FileToEntryConverter>
+      </Converter>
+      <Include />
+      <Exclude />
+      <Name>Configuration</Name>
+    </xfiles>
+    <xfiles>
+      <Entries>
+        <x-item>/sitecore modules/items/core/items.core.ColorPicker.dat</x-item>
+        <x-item>/sitecore modules/items/master/items.master.ColorPicker.dat</x-item>
+      </Entries>
+      <Converter>
+        <FileToEntryConverter>
+          <Root>/</Root>
+          <Transforms>
+            <InstallerConfigurationTransform>
+              <Options>
+                <BehaviourOptions>
+                  <ItemMode>Overwrite</ItemMode>
+                  <ItemMergeMode>Undefined</ItemMergeMode>
+                </BehaviourOptions>
+              </Options>
+            </InstallerConfigurationTransform>
+          </Transforms>
+        </FileToEntryConverter>
+      </Converter>
+      <Include />
+      <Exclude />
+      <Name>Item Resources</Name>
+    </xfiles>
+    <xfiles>
+      <Entries>
+        <x-item>/Views/ColorPicker/Dialog.cshtml</x-item>
+        <x-item>/Views/ColorPicker/Field.cshtml</x-item>
+      </Entries>
+      <Converter>
+        <FileToEntryConverter>
+          <Root>/</Root>
+          <Transforms>
+            <InstallerConfigurationTransform>
+              <Options>
+                <BehaviourOptions>
+                  <ItemMode>Overwrite</ItemMode>
+                  <ItemMergeMode>Undefined</ItemMergeMode>
+                </BehaviourOptions>
+              </Options>
+            </InstallerConfigurationTransform>
+          </Transforms>
+        </FileToEntryConverter>
+      </Converter>
+      <Include />
+      <Exclude />
+      <Name>Views</Name>
+    </xfiles>
+    <xfiles>
+      <Entries>
+        <x-item>/sitecore modules/Shell/ColorPicker/ColorPickerDialog.css</x-item>
+        <x-item>/sitecore modules/Shell/ColorPicker/ColorPickerDialog.js</x-item>
+        <x-item>/sitecore modules/Shell/ColorPicker/ColorPickerDialog.xml</x-item>
+      </Entries>
+      <Converter>
+        <FileToEntryConverter>
+          <Root>/</Root>
+          <Transforms>
+            <InstallerConfigurationTransform>
+              <Options>
+                <BehaviourOptions>
+                  <ItemMode>Overwrite</ItemMode>
+                  <ItemMergeMode>Undefined</ItemMergeMode>
+                </BehaviourOptions>
+              </Options>
+            </InstallerConfigurationTransform>
+          </Transforms>
+        </FileToEntryConverter>
+      </Converter>
+      <Include />
+      <Exclude />
+      <Name>Color Picker Dialog</Name>
+    </xfiles>
+    <xfiles>
+      <Entries>
+        <x-item>/sitecore/admin/ColorPicker/Uninstall.aspx</x-item>
+        <x-item>/sitecore/admin/ColorPicker/Uninstall.css</x-item>
+        <x-item>/sitecore/admin/ColorPicker/Uninstall.js</x-item>
+        <x-item>/sitecore/admin/ColorPicker/UninstallApi.ashx</x-item>
+      </Entries>
+      <Converter>
+        <FileToEntryConverter>
+          <Root>/</Root>
+          <Transforms>
+            <InstallerConfigurationTransform>
+              <Options>
+                <BehaviourOptions>
+                  <ItemMode>Overwrite</ItemMode>
+                  <ItemMergeMode>Undefined</ItemMergeMode>
+                </BehaviourOptions>
+              </Options>
+            </InstallerConfigurationTransform>
+          </Transforms>
+        </FileToEntryConverter>
+      </Converter>
+      <Include />
+      <Exclude />
+      <Name>Uninstall Tool</Name>
+    </xfiles>
+  </Sources>
+  <Converter>
+    <TrivialConverter>
+      <Transforms />
+    </TrivialConverter>
+  </Converter>
+  <Include />
+  <Exclude />
+  <Name />
+</project>

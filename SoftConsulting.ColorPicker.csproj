@@ -166,6 +166,7 @@
   <ItemGroup>
     <None Include="packages.config" />
     <None Include="web.config" />
+    <None Include="Packaging\SoftConsulting-ColorPicker.xml" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="App_Config\Modules\ColorPicker\SoftConsulting.ColorPicker.Services.config" />

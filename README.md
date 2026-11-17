@@ -24,7 +24,7 @@ dialog, or type a hex value directly.
 Run this from the SPE ISE to download the latest package from GitHub and install it in one step:
 
 ```powershell
-$releaseUrl = "https://github.com/sergatgh/sitecore-color-picker/releases/download/1.0.0.0/SoftConsulting-ColorPicker-1.0.0.0.zip"
+$releaseUrl = "https://github.com/sergatgh/sitecore-color-picker/releases/download/1.1.0.0/SoftConsulting-ColorPicker-1.1.0.0.zip"
 $packagePath = Join-Path $SitecoreTempFolder "SoftConsulting.ColorPicker.zip"
 
 Invoke-WebRequest -Uri $releaseUrl -OutFile $packagePath

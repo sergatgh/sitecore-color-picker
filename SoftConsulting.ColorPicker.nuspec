@@ -12,9 +12,23 @@
       transparency (8-digit #RRGGBBAA) support. Supports Sitecore XP 10.1+.
     </description>
     <tags>sitecore sitecore-module content-editor field color-picker</tags>
+    <copyright>Copyright © 2026 Soft Consulting US LLC</copyright>
+    <license type="expression">Apache-2.0</license>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <repository type="git" url="https://github.com/sergatgh/sitecore-color-picker.git" />
+    <releaseNotes>
+      1.1.0:
+      - Experience Editor buttons to pick a color in a dialog or clear the field value.
+      - Color distance calculators (Euclidean RGB, CIE76, CIEDE2000) and matching field validators.
+      - Option to disable custom color selection and restrict the field to palette swatches.
+      - Field controls are disabled when the user has no write access to the item.
+      - Fixed the uninstall page scan not picking up Color Picker fields.
+    </releaseNotes>
     <readme>docs\README.md</readme>
     <icon>images\icon.png</icon>
+    <dependencies>
+      <group targetFramework="net48" />
+    </dependencies>
   </metadata>
   <files>
     <file src="NUGET_README.md" target="docs\README.md" />
