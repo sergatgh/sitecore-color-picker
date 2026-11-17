@@ -132,8 +132,16 @@
     <Compile Include="Commands\EditColor.cs" />
     <Compile Include="Dialogs\ColorPickerDialogForm.cs" />
     <Compile Include="Dialogs\ColorPickerDialogViewModel.cs" />
+    <Compile Include="Distance\Cie76DistanceCalculator.cs" />
+    <Compile Include="Distance\Ciede2000DistanceCalculator.cs" />
+    <Compile Include="Distance\EuclideanRgbDistanceCalculator.cs" />
+    <Compile Include="Distance\IColorDistanceCalculator.cs" />
+    <Compile Include="Distance\ILabColorConverter.cs" />
+    <Compile Include="Distance\LabColor.cs" />
+    <Compile Include="Distance\LabColorConverter.cs" />
     <Compile Include="Fields\ColorPicker.cs" />
     <Compile Include="Fields\ColorPickerField.cs" />
+    <Compile Include="Fields\ColorPickerFieldDistanceExtensions.cs" />
     <Compile Include="Fields\ColorPickerSourceParser.cs" />
     <Compile Include="Fields\ColorPickerUtils.cs" />
     <Compile Include="Fields\ColorPickerViewModel.cs" />
@@ -147,6 +155,12 @@
     <Compile Include="sitecore\admin\ColorPicker\UninstallApi.ashx.cs" />
     <Compile Include="Uninstall\ColorPickerUninstaller.cs" />
     <Compile Include="Uninstall\ColorPickerUsageScanner.cs" />
+    <Compile Include="Uninstall\ColorPickerValidatorLocator.cs" />
+    <Compile Include="Validators\Cie76DistanceValidator.cs" />
+    <Compile Include="Validators\Ciede2000DistanceValidator.cs" />
+    <Compile Include="Validators\ColorDistanceMode.cs" />
+    <Compile Include="Validators\ColorDistanceValidator.cs" />
+    <Compile Include="Validators\EuclideanRgbDistanceValidator.cs" />
     <Compile Include="Validators\SwatchValidator.cs" />
   </ItemGroup>
   <ItemGroup>

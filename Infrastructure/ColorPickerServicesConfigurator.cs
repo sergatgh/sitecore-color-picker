@@ -11,6 +11,7 @@ namespace SoftConsulting.ColorPicker.Infrastructure
         {
             serviceCollection.AddSingleton<IColorPickerSourceParser, ColorPickerSourceParser>();
             serviceCollection.AddSingleton<IContentDatabaseResolver, ContentDatabaseResolver>();
+            serviceCollection.AddSingleton<IColorPickerValidatorLocator, ColorPickerValidatorLocator>();
             serviceCollection.AddSingleton<IColorPickerUsageScanner, ColorPickerUsageScanner>();
             serviceCollection.AddSingleton<IColorPickerUninstaller, ColorPickerUninstaller>();
         }

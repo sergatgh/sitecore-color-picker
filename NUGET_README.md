@@ -36,6 +36,24 @@ See [`Fields/ColorPickerField.cs`](Fields/ColorPickerField.cs) for the full memb
 `ToDecimal`, `ToHsb`, `SetFromDecimal`, `SetFromHsb`, ...). Every method is `public`/`protected
 virtual`, so it can be overridden from a derived field type.
 
+## Measuring color distance
+
+Extension methods measure how far the field's value is from another color. They return `null`
+for an empty field and ignore alpha:
+
+```csharp
+using SoftConsulting.ColorPicker.Fields;
+
+ColorPickerField color = item.Fields["Background Color"];
+var brandBlue = Color.FromArgb(0x00, 0x52, 0xCC);
+
+double? rgb = color.GetEuclideanRgbDistance(brandBlue);  // 0 - 441.67
+double? cie76 = color.GetCie76Distance(brandBlue);       // 0 - 100+, ~2.3 barely noticeable
+double? de2000 = color.GetCiede2000Distance(brandBlue);  // 0 - 100, ~1 barely noticeable
+
+double? custom = color.GetDistance(brandBlue, new MyDistanceCalculator()); // any IColorDistanceCalculator
+```
+
 ## Overriding the rendered view
 
 By default the field renders via `~/Views/ColorPicker/Field.cshtml`. Point it at your own Razor

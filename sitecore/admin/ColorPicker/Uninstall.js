@@ -211,10 +211,10 @@
     }
 
     function renderStep2() {
-        var rows = (state.report && state.report.SwatchValidatorFields) || [];
+        var rows = (state.report && state.report.ValidatorFields) || [];
         var allButton = document.querySelector('[data-action="remove-all-links"]');
         renderTable("cp-table-2", "cp-empty-2", allButton, rows,
-            ["Database", "Template", "Path", "Field"],
+            ["Database", "Template", "Path", "Field", "Validators"],
             function (f) {
                 return "<tr data-db=\"" + escapeHtml(f.DatabaseName) + "\" data-id=\"" + escapeHtml(f.ItemId) +
                     "\" data-field=\"" + escapeHtml(f.ValidatorFieldId) + "\">" +
@@ -222,6 +222,7 @@
                     "<td>" + escapeHtml(f.TemplateName) + "</td>" +
                     linkCell(f) +
                     "<td>" + escapeHtml(f.ValidatorFieldName) + "</td>" +
+                    "<td>" + escapeHtml((f.ValidatorNames || []).join(", ")) + "</td>" +
                     '<td><button type="button" class="cp-btn-action" data-row-action="remove-link">Remove link</button> <span class="cp-status"></span></td>' +
                     "</tr>";
             });
@@ -243,7 +244,7 @@
 
     function removeAllLinks(button) {
         return withSpinner(button, function () {
-            if (!window.confirm("Detach the swatch validator from every field listed here?")) {
+            if (!window.confirm("Detach the Color Picker validators from every field listed here?")) {
                 return;
             }
             return apiCall("removeAllValidatorReferences", { method: "POST" })

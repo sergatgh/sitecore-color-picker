@@ -1,9 +1,9 @@
 <%@ Page Language="C#" AutoEventWireup="true" Inherits="SoftConsulting.ColorPicker.Admin.ColorPickerUninstallPage" %>
 <!DOCTYPE html>
 <html>
-<head runat="server">
+<head>
     <title>Uninstall Color Picker</title>
-    <link rel="stylesheet" href="Uninstall.css" />
+    <link rel="stylesheet" href="<%= GetAssetUrl("Uninstall.css") %>" />
 </head>
 <body>
     <script>window.ColorPickerToken = "<%= Token %>";</script>
@@ -56,11 +56,12 @@
         </section>
 
         <section id="cp-panel-2" class="cp-panel">
-            <h2>Step 2 - Fields using the "Color Picker Swatch" validator</h2>
+            <h2>Step 2 - Fields using Color Picker validators</h2>
             <p class="cp-hint">
-                Fields whose Validators list references the <strong>Color Picker Swatch</strong> validator.
-                Informational, not blocking. Detaching references here just avoids leaving a field
-                with a dangling one if the validator item is later removed (see the README's
+                Fields whose Validators lists reference a validator item with a Type from this module -
+                the <strong>Color Picker Swatch</strong> validator, any color distance validators you
+                created, and your own classes derived from them. Without the DLL those types can't be
+                loaded. Detaching references here avoids leaving a field with a broken or dangling one (see the README's
                 "Uninstalling" section). If this looks incomplete, the Link Database may be stale -
                 rebuild it via Control Panel &rarr; Indexing &rarr; Rebuild Link Database, then
                 re-scan.
@@ -110,6 +111,6 @@
         </section>
     </div>
 
-    <script src="Uninstall.js"></script>
+    <script src="<%= GetAssetUrl("Uninstall.js") %>"></script>
 </body>
 </html>

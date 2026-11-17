@@ -21,16 +21,20 @@ namespace SoftConsulting.ColorPicker.Uninstall
     public class ColorPickerUsageScanner : IColorPickerUsageScanner
     {
         private readonly IContentDatabaseResolver contentDatabaseResolver;
+        private readonly IColorPickerValidatorLocator validatorLocator;
 
         public ColorPickerUsageScanner(IContentDatabaseResolver contentDatabaseResolver)
+            : this(contentDatabaseResolver, null)
+        {
+        }
+
+        public ColorPickerUsageScanner(IContentDatabaseResolver contentDatabaseResolver, IColorPickerValidatorLocator validatorLocator)
         {
             this.contentDatabaseResolver = contentDatabaseResolver ?? new ContentDatabaseResolver();
+            this.validatorLocator = validatorLocator ?? new ColorPickerValidatorLocator();
         }
 
         private const string ColorPickerFieldTypeName = "Color Picker";
-
-        private const string ValidatorItemPath =
-            "/sitecore/system/Settings/Validation Rules/Field Rules/Color Picker/Color Picker Swatch";
 
         private const string PaletteTemplatePath = "/sitecore/templates/Foundation/Color Picker/Palette";
         private const string PaletteModuleFolderPath = "/sitecore/system/Modules/Color Picker/Palettes";
@@ -41,6 +45,8 @@ namespace SoftConsulting.ColorPicker.Uninstall
         private const string ContentEditorUrlFormat = "/sitecore/shell/Applications/Content Editor.aspx?sc_bw=1&id={0}&fo={0}&db={1}";
 
         protected virtual IContentDatabaseResolver ContentDatabaseResolver => this.contentDatabaseResolver;
+
+        protected virtual IColorPickerValidatorLocator ValidatorLocator => this.validatorLocator;
 
         public virtual ColorPickerUsageReport Scan()
         {
@@ -70,18 +76,7 @@ namespace SoftConsulting.ColorPicker.Uninstall
                 }
             }
 
-            var validatorItem = database.GetItem(ValidatorItemPath);
-            if (validatorItem != null)
-            {
-                foreach (var link in GetSwatchValidatorReferrers(validatorItem))
-                {
-                    var sourceItem = link.GetSourceItem();
-                    if (sourceItem != null)
-                    {
-                        report.SwatchValidatorFields.Add(DescribeField(sourceItem, link.SourceFieldID));
-                    }
-                }
-            }
+            ScanValidatorReferences(database, report);
 
             var paletteTemplateItem = database.GetItem(PaletteTemplatePath);
             if (paletteTemplateItem == null)
@@ -105,9 +100,37 @@ namespace SoftConsulting.ColorPicker.Uninstall
         protected virtual bool IsColorPickerFieldType(Item templateFieldItem)
             => string.Equals(templateFieldItem["Type"], ColorPickerFieldTypeName, StringComparison.OrdinalIgnoreCase);
 
+        // One entry per referencing validation field, even when it lists several module validators.
+        protected virtual void ScanValidatorReferences(Database database, ColorPickerUsageReport report)
+        {
+            var usages = new Dictionary<string, ColorPickerFieldUsage>(StringComparer.OrdinalIgnoreCase);
+
+            foreach (var validatorItem in ValidatorLocator.GetModuleValidators(database))
+            {
+                foreach (var link in GetValidatorReferrers(validatorItem))
+                {
+                    var sourceItem = link.GetSourceItem();
+                    if (sourceItem == null)
+                    {
+                        continue;
+                    }
+
+                    var key = sourceItem.ID + "|" + link.SourceFieldID;
+                    if (!usages.TryGetValue(key, out var usage))
+                    {
+                        usage = DescribeField(sourceItem, link.SourceFieldID);
+                        usages.Add(key, usage);
+                        report.ValidatorFields.Add(usage);
+                    }
+
+                    usage.ValidatorNames.Add(validatorItem.Name);
+                }
+            }
+        }
+
         // Only template fields can reference a validator item, so every referrer is one.
         // Results can be stale until the Link Database is rebuilt.
-        protected virtual IEnumerable<ItemLink> GetSwatchValidatorReferrers(Item validatorItem)
+        protected virtual IEnumerable<ItemLink> GetValidatorReferrers(Item validatorItem)
             => Sitecore.Globals.LinkDatabase.GetReferrers(validatorItem) ?? new ItemLink[0];
 
         protected virtual IEnumerable<Item> GetPaletteItems(Database database, ID paletteTemplateId)
@@ -162,7 +185,8 @@ namespace SoftConsulting.ColorPicker.Uninstall
     {
         public IList<ColorPickerFieldUsage> ColorPickerTypedFields { get; } = new List<ColorPickerFieldUsage>();
 
-        public IList<ColorPickerFieldUsage> SwatchValidatorFields { get; } = new List<ColorPickerFieldUsage>();
+        /// <summary>Fields referencing any validator item whose Type comes from this module.</summary>
+        public IList<ColorPickerFieldUsage> ValidatorFields { get; } = new List<ColorPickerFieldUsage>();
 
         /// <summary>Palette items other than the seeded samples.</summary>
         public IList<ColorPickerPaletteUsage> CustomPalettes { get; } = new List<ColorPickerPaletteUsage>();
@@ -186,10 +210,13 @@ namespace SoftConsulting.ColorPicker.Uninstall
 
         public string ContentEditorUrl { get; set; }
 
-        /// <summary>Set only for <see cref="ColorPickerUsageReport.SwatchValidatorFields"/> entries.</summary>
+        /// <summary>Set only for <see cref="ColorPickerUsageReport.ValidatorFields"/> entries.</summary>
         public ID ValidatorFieldId { get; set; }
 
         public string ValidatorFieldName { get; set; }
+
+        /// <summary>Names of the module validator items the field references; empty for other entries.</summary>
+        public IList<string> ValidatorNames { get; } = new List<string>();
     }
 
     public class ColorPickerPaletteUsage

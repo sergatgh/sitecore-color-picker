@@ -29,6 +29,15 @@ namespace SoftConsulting.ColorPicker.Admin
             Session[TokenSessionKey] = Token;
         }
 
+        // Versions the URL by the file's timestamp so browsers don't keep a stale copy after an upgrade.
+        protected virtual string GetAssetUrl(string fileName)
+        {
+            var physicalPath = Server.MapPath(fileName);
+            return System.IO.File.Exists(physicalPath)
+                ? fileName + "?v=" + System.IO.File.GetLastWriteTimeUtc(physicalPath).Ticks
+                : fileName;
+        }
+
         protected virtual bool EnsureAdministrator()
         {
             var user = Sitecore.Context.User;

@@ -37,21 +37,30 @@ namespace SoftConsulting.ColorPicker.Uninstall
     {
         private readonly IContentDatabaseResolver contentDatabaseResolver;
         private readonly IColorPickerUsageScanner usageScanner;
+        private readonly IColorPickerValidatorLocator validatorLocator;
 
         public ColorPickerUninstaller(IContentDatabaseResolver contentDatabaseResolver, IColorPickerUsageScanner usageScanner)
+            : this(contentDatabaseResolver, usageScanner, null)
+        {
+        }
+
+        public ColorPickerUninstaller(
+            IContentDatabaseResolver contentDatabaseResolver,
+            IColorPickerUsageScanner usageScanner,
+            IColorPickerValidatorLocator validatorLocator)
         {
             this.contentDatabaseResolver = contentDatabaseResolver ?? new ContentDatabaseResolver();
-            this.usageScanner = usageScanner ?? new ColorPickerUsageScanner(this.contentDatabaseResolver);
+            this.validatorLocator = validatorLocator ?? new ColorPickerValidatorLocator();
+            this.usageScanner = usageScanner ?? new ColorPickerUsageScanner(this.contentDatabaseResolver, this.validatorLocator);
         }
 
         private const string SingleLineTextFieldType = "Single-Line Text";
 
-        private const string ValidatorItemPath =
-            "/sitecore/system/Settings/Validation Rules/Field Rules/Color Picker/Color Picker Swatch";
-
         protected virtual IContentDatabaseResolver ContentDatabaseResolver => this.contentDatabaseResolver;
 
         protected virtual IColorPickerUsageScanner UsageScanner => this.usageScanner;
+
+        protected virtual IColorPickerValidatorLocator ValidatorLocator => this.validatorLocator;
 
         public virtual ColorPickerActionResult ConvertFieldToSingleLineText(string databaseName, string itemId)
         {
@@ -117,15 +126,9 @@ namespace SoftConsulting.ColorPicker.Uninstall
                     return ColorPickerActionResult.SuccessResult("Field no longer exists - nothing to detach.");
                 }
 
-                var validatorId = database.GetItem(ValidatorItemPath)?.ID;
-                if (validatorId is null)
-                {
-                    return ColorPickerActionResult.SuccessResult("Validator item no longer exists - nothing to detach.");
-                }
-
-                // A "|"-delimited list of validator IDs - keep every other validator.
+                // A "|"-delimited list of validator IDs - keep every validator not from this module.
                 var remaining = new List<string>();
-                var removed = false;
+                var removedCount = 0;
                 foreach (var rawToken in (field.Value ?? string.Empty).Split('|'))
                 {
                     var token = rawToken.Trim();
@@ -134,19 +137,19 @@ namespace SoftConsulting.ColorPicker.Uninstall
                         continue;
                     }
 
-                    if (ID.TryParse(token, out var tokenId) && tokenId.Equals(validatorId))
+                    if (ID.TryParse(token, out var tokenId) && ValidatorLocator.IsModuleValidator(database.GetItem(tokenId)))
                     {
-                        removed = true;
+                        removedCount++;
                         continue;
                     }
 
                     remaining.Add(token);
                 }
 
-                if (!removed)
+                if (removedCount == 0)
                 {
                     return ColorPickerActionResult.FailedResult(
-                        "Could not find the validator reference in this field's current value - it may already have been removed.");
+                        "Could not find a Color Picker validator reference in this field's current value - it may already have been removed.");
                 }
 
                 using (new EditContext(item))
@@ -154,7 +157,7 @@ namespace SoftConsulting.ColorPicker.Uninstall
                     field.Value = string.Join("|", remaining);
                 }
 
-                return ColorPickerActionResult.SuccessResult("Reference removed.");
+                return ColorPickerActionResult.SuccessResult(removedCount == 1 ? "Reference removed." : removedCount + " references removed.");
             }
         }
 
@@ -163,7 +166,7 @@ namespace SoftConsulting.ColorPicker.Uninstall
             var failures = new List<string>();
             var count = 0;
 
-            foreach (var field in UsageScanner.Scan().SwatchValidatorFields)
+            foreach (var field in UsageScanner.Scan().ValidatorFields)
             {
                 var result = RemoveValidatorReference(field.DatabaseName, field.ItemId.ToString(), field.ValidatorFieldId?.ToString());
                 if (result.Success)

@@ -73,6 +73,31 @@ field item (e.g. `/sitecore/templates/User Defined/.../Case Color`) and fill in:
 '$Value' is not a valid color. Use a hex value like #0052CC, or #0052CC80 with transparency.
 ```
 
+**Color distance validators**
+
+Keep a color close to a target color (e.g. a brand color), or away from one (e.g. too close to
+the background). Create a **Validation Rule** item, e.g. under
+`/sitecore/system/Settings/Validation Rules/Field Rules`, set its **Type** to one of
+the validators below, fill in **Parameters**, then attach the item to a template field's
+validation rules.
+
+| Type | Algorithm | Scale |
+| --- | --- | --- |
+| `SoftConsulting.ColorPicker.Validators.Ciede2000DistanceValidator, SoftConsulting.ColorPicker` | CIEDE2000 — most accurate to human perception (recommended) | 0–100; ~1 is barely noticeable |
+| `SoftConsulting.ColorPicker.Validators.Cie76DistanceValidator, SoftConsulting.ColorPicker` | CIE76 — Euclidean distance in L\*a\*b\* | 0–100+; ~2.3 is barely noticeable |
+| `SoftConsulting.ColorPicker.Validators.EuclideanRgbDistanceValidator, SoftConsulting.ColorPicker` | Euclidean distance in RGB | 0–441.67 |
+
+| Parameter | Example | Description |
+| --- | --- | --- |
+| `Color` | `Color=0052CC` | The color to measure against. Leave out the `#` (or write it as `%23`). |
+| `Distance` | `Distance=10` | The acceptable distance, on the chosen algorithm's scale. Use `.` for decimals. |
+| `Mode` | `Mode=Outside` | `Within` (default): the value must be at most `Distance` from `Color`. `Outside`: the value must be further than `Distance`, to avoid that color. |
+
+For example, `Color=FFFFFF&Distance=15&Mode=Outside` with CIEDE2000 rejects colors that are
+nearly white. Alpha is ignored. If `Color` or `Distance` is missing or invalid, the validator
+logs a warning and passes. Sitecore's standard `Result` parameter (e.g. `Result=Warning`) still
+controls the severity.
+
 ## Uninstalling
 
 ### Admin page
@@ -81,7 +106,9 @@ Open **`/sitecore/admin/ColorPicker/Uninstall.aspx`** as a Sitecore administrato
 wizard that scans for and lets you remove everything the module created or touched:
 
 1. Convert any "Color Picker" template fields to plain text fields.
-2. Detach the "Color Picker Swatch" validator from any fields using it.
+2. Detach the module's validators from any fields using them. Every validator item whose
+   **Type** comes from this module is detected: "Color Picker Swatch", color distance validators
+   you created, and your own classes derived from them.
 3. Delete custom Palette items (your own, not the two seeded samples).
 4. Lists every file the package installed, ready to delete by hand, followed by an app pool
    recycle.
